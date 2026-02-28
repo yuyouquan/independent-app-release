@@ -59,6 +59,13 @@ const PipelineDetailPage: React.FC = () => {
   
   const apkProcess = mockAPKProcess;
   const historyRecords = mockPipelineHistory[id || 'apk-001'] || [];
+  
+  const currentNode = apkProcess.nodes[apkProcess.currentNode];
+  const isGrayScaleNode = currentNode?.name === '灰度监控';
+
+  const handleGoToGrayScaleMonitor = () => {
+    navigate(`/gray-scale/${id || 'apk-001'}`);
+  };
 
   return (
     <div className="space-y-6">
@@ -144,19 +151,29 @@ const PipelineDetailPage: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">当前节点详情</h3>
         <div className="bg-blue-50 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-blue-600 font-medium">
-              {apkProcess.nodes[apkProcess.currentNode]?.name || '未知节点'}
-            </span>
-            <span className="px-2 py-0.5 bg-blue-200 text-blue-800 rounded text-xs">进行中</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600 font-medium">
+                {currentNode?.name || '未知节点'}
+              </span>
+              <span className="px-2 py-0.5 bg-blue-200 text-blue-800 rounded text-xs">进行中</span>
+            </div>
+            {isGrayScaleNode && (
+              <button 
+                onClick={handleGoToGrayScaleMonitor}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 flex items-center gap-2"
+              >
+                📊 进入灰度监控
+              </button>
+            )}
           </div>
           <div className="text-sm text-gray-600">
-            等待处理...
+            {isGrayScaleNode ? '点击查看灰度监控数据面板' : '等待处理...'}
           </div>
-          {apkProcess.nodes[apkProcess.currentNode]?.operator && (
+          {currentNode?.operator && (
             <div className="text-xs text-gray-500 mt-2">
-              处理人: {apkProcess.nodes[apkProcess.currentNode].operator}
-              {apkProcess.nodes[apkProcess.currentNode].operatorTime && ` | 时间: ${apkProcess.nodes[apkProcess.currentNode].operatorTime}`}
+              处理人: {currentNode.operator}
+              {currentNode.operatorTime && ` | 时间: ${currentNode.operatorTime}`}
             </div>
           )}
         </div>

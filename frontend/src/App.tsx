@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
 import ApplicationDetailPage from './pages/ApplicationDetailPage';
 import PipelineDetailPage from './pages/PipelineDetailPage';
+import GrayScaleMonitorPage from './pages/GrayScaleMonitorPage';
 import { AppProvider } from './context/AppContext';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="application/:id" element={<ApplicationDetailPage />} />
             <Route path="pipeline/:id" element={<PipelineDetailPage />} />
+            <Route path="gray-scale/:id" element={<GrayScaleMonitorPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
