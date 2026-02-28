@@ -86,7 +86,7 @@ interface AppFormData {
   publishCountryDetail: string[];
   publishBrand: string[];
   publishModel: string[];
-  testModel: string[];
+  testModel: string[];  // 内测机型 - 新增
   androidVersion: string;
   tosVersion: string;
   filterIndia: 'yes' | 'no';
@@ -186,6 +186,7 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
     if (!appData.publishCountry) newErrors.publishCountry = '请选择发布国家';
     if (!appData.androidVersion) newErrors.androidVersion = '请选择安卓版本';
     if (!appData.tosVersion) newErrors.tosVersion = '请选择tOS版本';
+    if (appData.testModel.length === 0) newErrors.testModel = '请选择内测机型(至少1个)';
     
     if (appData.isPAUpdate === 'yes') {
       if (!appData.grayScaleLevel) newErrors.grayScaleLevel = '请输入灰度量级';
@@ -530,7 +531,7 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                 </div>
 
                 {/* 第四行 - 品牌和机型 */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
                     <div className="border border-gray-300 rounded-lg p-2 max-h-24 overflow-y-auto">
@@ -574,6 +575,29 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                         </label>
                       ))}
                     </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">内测机型 <span className="text-red-500">*</span></label>
+                    <div className={`border rounded-lg p-2 max-h-24 overflow-y-auto ${errors.testModel ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}>
+                      {modelOptions.map(model => (
+                        <label key={`test-${model}`} className="flex items-center mb-1">
+                          <input
+                            type="checkbox"
+                            checked={appData.testModel.includes(model)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAppData(prev => ({ ...prev, testModel: [...prev.testModel, model] }));
+                              } else {
+                                setAppData(prev => ({ ...prev, testModel: prev.testModel.filter(m => m !== model) }));
+                              }
+                            }}
+                            className="mr-2"
+                          />
+                          {model}
+                        </label>
+                      ))}
+                    </div>
+                    {errors.testModel && <p className="text-red-500 text-xs mt-1">{errors.testModel}</p>}
                   </div>
                 </div>
 
