@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockApplications, mockTodos, mockKanbanData, shuttleOptions, tosVersionOptions, apkStatusOptions } from '../data/mockData';
+import { CreateApplicationModal } from '../components/CreateApplicationModal';
 import type { KanbanData } from '../types';
 
 // 状态颜色映射
@@ -20,7 +21,7 @@ const statusLabels = {
 };
 
 // 申请列表组件
-const ApplicationList: React.FC<{ onViewDetail: (id: string) => void }> = ({ onViewDetail }) => {
+const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModal: () => void }> = ({ onViewDetail, onOpenModal }) => {
   const [searchShuttle, setSearchShuttle] = useState('');
   const [searchTos, setSearchTos] = useState('');
   const [searchStatus, setSearchStatus] = useState('');
@@ -41,7 +42,7 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void }> = ({ onV
         <h2 className="text-lg font-semibold text-gray-900">独立三方应用发布流程申请列表</h2>
         <button
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          onClick={() => alert('申请功能开发中...')}
+          onClick={onOpenModal}
         >
           新建申请
         </button>
@@ -203,18 +204,29 @@ const KanbanSection: React.FC = () => {
 // 首页主组件
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleViewDetail = (id: string) => {
     navigate(`/application/${id}`);
   };
 
+  const handleCreateApplication = (data: any) => {
+    console.log('提交申请数据:', data);
+    alert('申请提交成功！请在待办中查看审核状态。');
+  };
+
   return (
     <div className="space-y-6">
-      <ApplicationList onViewDetail={handleViewDetail} />
+      <ApplicationList onViewDetail={handleViewDetail} onOpenModal={() => setIsModalOpen(true)} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <TodoSection />
         <KanbanSection />
       </div>
+      <CreateApplicationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateApplication}
+      />
     </div>
   );
 };
