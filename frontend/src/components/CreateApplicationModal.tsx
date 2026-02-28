@@ -82,8 +82,8 @@ interface AppFormData {
   testReport: File | null;
   appCategory: string;
   isSystemApp: 'yes' | 'no';
-  publishCountry: string;
-  publishCountryDetail: string[];
+  publishCountryType: 'all' | 'include' | 'exclude'; // 全部/包含/不包含
+  publishCountryDetail: string[];  // 具体选择的国家
   publishBrand: string[];
   publishModel: string[];
   testModel: string[];  // 内测机型 - 新增
@@ -133,7 +133,7 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
     testReport: null,
     appCategory: '',
     isSystemApp: 'no',
-    publishCountry: '',
+    publishCountryType: 'all',
     publishCountryDetail: [],
     publishBrand: [],
     publishModel: [],
@@ -183,7 +183,9 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
     if (!appData.versionCode) newErrors.versionCode = '请选择版本号';
     if (!appData.apkId) newErrors.apkId = '请选择APK制品';
     if (!appData.appCategory) newErrors.appCategory = '请选择应用分类';
-    if (!appData.publishCountry) newErrors.publishCountry = '请选择发布国家';
+    if (appData.publishCountryType !== 'all' && appData.publishCountryDetail.length === 0) {
+      newErrors.publishCountryDetail = '请选择具体国家';
+    }
     if (!appData.androidVersion) newErrors.androidVersion = '请选择安卓版本';
     if (!appData.tosVersion) newErrors.tosVersion = '请选择tOS版本';
     if (appData.testModel.length === 0) newErrors.testModel = '请选择内测机型(至少1个)';
@@ -240,7 +242,7 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
       setShuttleData({ shuttleName: '', tosVersion: '' });
       setAppData({
         appType: '', appName: '', packageName: '', versionCode: '', apkId: '',
-        testReport: null, appCategory: '', isSystemApp: 'no', publishCountry: '',
+        testReport: null, appCategory: '', isSystemApp: 'no', publishCountryType: 'all',
         publishCountryDetail: [], publishBrand: [], publishModel: [], testModel: [],
         androidVersion: '', tosVersion: '', filterIndia: 'no', isPAUpdate: 'no',
         grayScaleLevel: '', effectiveTime: ''
@@ -516,17 +518,36 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                       发布国家 <span className="text-red-500">*</span>
                     </label>
                     <select
-                      value={appData.publishCountry}
-                      onChange={(e) => setAppData(prev => ({ ...prev, publishCountry: e.target.value }))}
-                      className={`w-full border rounded-lg px-3 py-2 ${
-                        errors.publishCountry ? 'border-red-500' : 'border-gray-300'
-                      }`}
+                      value={appData.publishCountryType}
+                      onChange={(e) => setAppData(prev => ({ ...prev, publishCountryType: e.target.value as 'all' | 'include' | 'exclude' }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2"
                     >
-                      <option value="">请选择</option>
-                      {countryOptions.map(c => (
-                        <option key={c.code} value={c.code}>{c.name}</option>
-                      ))}
+                      <option value="all">全部国家</option>
+                      <option value="include">包含以下国家</option>
+                      <option value="exclude">不包含以下国家</option>
                     </select>
+                    {appData.publishCountryType !== 'all' && (
+                      <div className={`border rounded-lg p-2 max-h-24 overflow-y-auto ${errors.publishCountryDetail ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}>
+                        {countryOptions.filter(c => c.code !== 'all').map(c => (
+                          <label key={c.code} className="flex items-center mb-1">
+                            <input
+                              type="checkbox"
+                              checked={appData.publishCountryDetail.includes(c.code)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setAppData(prev => ({ ...prev, publishCountryDetail: [...prev.publishCountryDetail, c.code] }));
+                                } else {
+                                  setAppData(prev => ({ ...prev, publishCountryDetail: prev.publishCountryDetail.filter(code => code !== c.code) }));
+                                }
+                              }}
+                              className="mr-2"
+                            />
+                            {c.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {errors.publishCountryDetail && <p className="text-red-500 text-xs mt-1">{errors.publishCountryDetail}</p>}
                   </div>
                 </div>
 
