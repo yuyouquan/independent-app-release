@@ -29,9 +29,17 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
   const [searchTos, setSearchTos] = useState('');
   const [searchStatus, setSearchStatus] = useState('');
   const [searchApplicant, setSearchApplicant] = useState('');
+  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const filteredApps = mockApplications.filter((app) => {
+    const appDate = new Date(app.applyTime);
+    const startDate = dateRange.start ? new Date(dateRange.start) : null;
+    const endDate = dateRange.end ? new Date(dateRange.end) : null;
+    
+    const isInDateRange = (!startDate || appDate >= startDate) && (!endDate || appDate <= endDate);
+    
     return (
+      isInDateRange &&
       (searchShuttle === '' || app.shuttleName.includes(searchShuttle)) &&
       (searchTos === '' || app.tosVersion.includes(searchTos)) &&
       (searchStatus === '' || app.apkStatus === searchStatus) &&
@@ -52,7 +60,7 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
       </div>
 
       {/* 筛选条件 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
         <select
           className="border border-gray-300 rounded-lg px-3 py-2"
           value={searchShuttle}
@@ -90,6 +98,56 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
           value={searchApplicant}
           onChange={(e) => setSearchApplicant(e.target.value)}
         />
+        <input
+          type="date"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          value={dateRange.start}
+          onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+          placeholder="开始日期"
+        />
+        <input
+          type="date"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+          value={dateRange.end}
+          onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+          placeholder="结束日期"
+        />
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={() => {
+              const today = new Date();
+              const weekAgo = new Date(today);
+              weekAgo.setDate(today.getDate() - 7);
+              setDateRange({ 
+                start: weekAgo.toISOString().split('T')[0], 
+                end: today.toISOString().split('T')[0] 
+              });
+            }}
+            className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-600"
+          >
+            近7天
+          </button>
+          <button
+            onClick={() => {
+              const today = new Date();
+              const monthAgo = new Date(today);
+              monthAgo.setDate(today.getDate() - 30);
+              setDateRange({ 
+                start: monthAgo.toISOString().split('T')[0], 
+                end: today.toISOString().split('T')[0] 
+              });
+            }}
+            className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-600"
+          >
+            近30天
+          </button>
+          <button
+            onClick={() => setDateRange({ start: '', end: '' })}
+            className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
+          >
+            清除
+          </button>
+        </div>
       </div>
 
       {/* 表格 */}

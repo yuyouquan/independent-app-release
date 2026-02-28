@@ -1,7 +1,78 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockAPKProcess, mockApplications } from '../data/mockData';
+import { apk制品List } from '../components/CreateApplicationModal';
 import type { APKProcess, ProcessNode } from '../types';
+
+// 添加应用Modal
+const AddAppModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (app: { name: string; packageName: string; version: string }) => void;
+}> = ({ isOpen, onClose, onAdd }) => {
+  const [selectedApk, setSelectedApk] = useState('');
+  
+  if (!isOpen) return null;
+  
+  const selectedApkData = apk制品List.find(a => a.id === selectedApk);
+  
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md">
+          <div className="px-6 py-4 border-b flex justify-between items-center">
+            <h3 className="text-lg font-semibold">添加应用到当前班车</h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">✕</button>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                选择APK制品 <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedApk}
+                onChange={(e) => setSelectedApk(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              >
+                <option value="">请选择APK</option>
+                {apk制品List.map(a => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
+            </div>
+            {selectedApkData && (
+              <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                <div className="text-gray-500 mb-1">应用信息</div>
+                <div>名称: {selectedApkData.name.split('_')[0]}</div>
+                <div>版本: {selectedApkData.name.split('_')[1]?.replace('.apk', '')}</div>
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-4 border-t flex justify-end gap-3">
+            <button onClick={onClose} className="px-4 py-2 border rounded-lg">取消</button>
+            <button
+              onClick={() => {
+                if (selectedApkData) {
+                  onAdd({
+                    name: selectedApkData.name.split('_')[0],
+                    packageName: 'com.example.' + selectedApkData.name.split('_')[0].toLowerCase(),
+                    version: selectedApkData.name.split('_')[1]?.replace('.apk', '') || '1.0.0'
+                  });
+                  onClose();
+                }
+              }}
+              disabled={!selectedApk}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+            >
+              添加
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // 飞书通知模拟函数
 const sendFeishuNotification = (type: 'pass' | 'reject', data: {
@@ -234,6 +305,7 @@ const ApplicationDetailPage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [auditNodeIndex, setAuditNodeIndex] = useState(0);
+  const [showAddAppModal, setShowAddAppModal] = useState(false);
 
   // 查找对应的申请数据
   const application = mockApplications.find(app => app.id === id) || mockApplications[0];
@@ -244,6 +316,10 @@ const ApplicationDetailPage: React.FC = () => {
   const handleAudit = (_processId: string, nodeIndex: number) => {
     setAuditNodeIndex(nodeIndex);
     setShowAuditModal(true);
+  };
+
+  const handleAddApp = (app: { name: string; packageName: string; version: string }) => {
+    alert(`✅ 应用添加成功！\n\n应用: ${app.name}\n包名: ${app.packageName}\n版本: ${app.version}\n\n📢 飞书通知已发送给: 申请人${application.applicant}`);
   };
 
   const handleAuditPass = (comment: string) => {
@@ -323,7 +399,7 @@ const ApplicationDetailPage: React.FC = () => {
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
             />
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700" onClick={() => setShowAddAppModal(true)}>
               添加应用
             </button>
           </div>
@@ -349,6 +425,11 @@ const ApplicationDetailPage: React.FC = () => {
         onPass={handleAuditPass}
         onReject={handleAuditReject}
         nodeName={apkProcess.nodes[auditNodeIndex]?.name || '审核'}
+      />
+      <AddAppModal
+        isOpen={showAddAppModal}
+        onClose={() => setShowAddAppModal(false)}
+        onAdd={handleAddApp}
       />
     </div>
   );
