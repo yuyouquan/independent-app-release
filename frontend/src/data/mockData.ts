@@ -1,5 +1,56 @@
 import type { Application, Todo, APKProcess, KanbanData } from '../types';
 
+// ==================== 看板数据类型 ====================
+export interface KanbanShuttle {
+  name: string;
+  tosVersion: string;
+  appCount: number;
+  completedCount: number;
+  processingCount: number;
+}
+
+export interface KanbanProduct {
+  name: string;
+  packageName: string;
+  releaseCount: number;
+  latestVersion: string;
+  status: 'active' | 'inactive';
+}
+
+export interface KanbanStatus {
+  name: string;
+  count: number;
+  color: string;
+}
+
+// 模拟看板数据 - 班车视角
+export const mockKanbanShuttle: KanbanShuttle[] = [
+  { name: '班车-20260228-001', tosVersion: 'tOS 16.1.0', appCount: 5, completedCount: 2, processingCount: 3 },
+  { name: '班车-20260227-003', tosVersion: 'tOS 16.0.5', appCount: 3, completedCount: 3, processingCount: 0 },
+  { name: '班车-20260227-002', tosVersion: 'tOS 16.0.5', appCount: 4, completedCount: 1, processingCount: 3 },
+  { name: '班车-20260226-001', tosVersion: 'tOS 15.5.0', appCount: 2, completedCount: 2, processingCount: 0 },
+];
+
+// 模拟看板数据 - 产品视角
+export const mockKanbanProduct: KanbanProduct[] = [
+  { name: 'WhatsApp', packageName: 'com.whatsapp', releaseCount: 12, latestVersion: '2.26.1.15', status: 'active' },
+  { name: 'Telegram', packageName: 'org.telegram', releaseCount: 8, latestVersion: '10.5.0', status: 'active' },
+  { name: 'Facebook', packageName: 'com.facebook', releaseCount: 15, latestVersion: '450.0.0', status: 'active' },
+  { name: 'Instagram', packageName: 'com.instagram', releaseCount: 10, latestVersion: '320.0.0', status: 'active' },
+  { name: 'TikTok', packageName: 'com.zhiliaoapp', releaseCount: 6, latestVersion: '32.5.0', status: 'inactive' },
+];
+
+// 模拟看板数据 - 状态视角
+export const mockKanbanStatus: KanbanStatus[] = [
+  { name: '通道发布申请', count: 3, color: 'bg-blue-500' },
+  { name: '通道发布审核', count: 5, color: 'bg-yellow-500' },
+  { name: '物料上传', count: 4, color: 'bg-purple-500' },
+  { name: '物料审核', count: 2, color: 'bg-orange-500' },
+  { name: '应用上架', count: 6, color: 'bg-cyan-500' },
+  { name: '业务内测', count: 3, color: 'bg-pink-500' },
+  { name: '灰度监控', count: 8, color: 'bg-green-500' },
+];
+
 // 模拟申请列表数据
 export const mockApplications: Application[] = [
   {
