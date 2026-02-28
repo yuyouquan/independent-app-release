@@ -1,102 +1,335 @@
-const Database = require('better-sqlite3');
+const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '../../data/app-publish.db');
-const db = new Database(dbPath);
+const dataDir = path.join(__dirname, '../../data');
+const dbPath = path.join(dataDir, 'app-publish.json');
 
-// 初始化数据库表
-db.exec(`
-  -- 申请流程单表
-  CREATE TABLE IF NOT EXISTS applications (
-    id TEXT PRIMARY KEY,
-    shuttle_name TEXT NOT NULL,
-    tos_version TEXT NOT NULL,
-    apk_status TEXT DEFAULT 'processing',
-    applicant TEXT NOT NULL,
-    apply_time TEXT NOT NULL,
-    status TEXT DEFAULT 'processing',
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
+// 确保数据目录存在
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
-  -- APK发布流程表
-  CREATE TABLE IF NOT EXISTS apk_processes (
-    id TEXT PRIMARY KEY,
-    application_id TEXT NOT NULL,
-    app_name TEXT NOT NULL,
-    package_name TEXT NOT NULL,
-    version_code TEXT NOT NULL,
-    app_type TEXT,
-    app_category TEXT,
-    apk_url TEXT,
-    test_report_url TEXT,
-    is_system_app TEXT DEFAULT 'no',
-    publish_country_type TEXT DEFAULT 'all',
-    publish_country_detail TEXT,
-    publish_brand TEXT,
-    publish_model TEXT,
-    test_model TEXT,
-    android_version TEXT,
-    filter_india TEXT DEFAULT 'no',
-    is_pa_update TEXT DEFAULT 'no',
-    gray_scale_level INTEGER,
-    effective_time TEXT,
-    status TEXT DEFAULT 'processing',
-    current_node INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (application_id) REFERENCES applications(id)
-  );
+// 初始化数据库（JSON文件）
+let db = {
+  applications: [],
+  apk_processes: [],
+  process_nodes: [],
+  materials: [],
+  operation_history: []
+};
 
-  -- 流程节点表
-  CREATE TABLE IF NOT EXISTS process_nodes (
-    id TEXT PRIMARY KEY,
-    process_id TEXT NOT NULL,
-    node_index INTEGER NOT NULL,
-    node_name TEXT NOT NULL,
-    status TEXT DEFAULT 'pending',
-    operator TEXT,
-    operator_time TEXT,
-    reject_reason TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (process_id) REFERENCES apk_processes(id)
-  );
+// 加载现有数据
+if (fs.existsSync(dbPath)) {
+  try {
+    const data = fs.readFileSync(dbPath, 'utf8');
+    db = JSON.parse(data);
+    console.log('数据库加载成功');
+  } catch (e) {
+    console.log('数据库初始化');
+  }
+} else {
+  console.log('数据库初始化');
+}
 
-  -- 物料表
-  CREATE TABLE IF NOT EXISTS materials (
-    id TEXT PRIMARY KEY,
-    process_id TEXT NOT NULL,
-    app_name TEXT,
-    short_description TEXT,
-    product_detail TEXT,
-    update_notes TEXT,
-    keywords TEXT,
-    app_icon_url TEXT,
-    hero_image_url TEXT,
-    screenshots TEXT,
-    is_gp_upload TEXT DEFAULT 'no',
-    gp_link TEXT,
-    status TEXT DEFAULT 'pending',
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (process_id) REFERENCES apk_processes(id)
-  );
+// 保存数据库
+const saveDb = () => {
+  fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf8');
+};
 
-  -- 操作历史记录表
-  CREATE TABLE IF NOT EXISTS operation_history (
-    id TEXT PRIMARY KEY,
-    process_id TEXT NOT NULL,
-    operator TEXT NOT NULL,
-    action TEXT NOT NULL,
-    detail TEXT,
-    node_name TEXT,
-    action_time TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (process_id) REFERENCES apk_processes(id)
-  );
-`);
+// 模拟SQL的封装 - 支持链式调用 (prepare().all() / .get() / .run())
+const dbApi = {
+  prepare: (sql) => {
+    return {
+      all: (params = []) => {
+        return dbApi.all(sql, params);
+      },
+      get: (params = []) => {
+        return dbApi.get(sql, params);
+      },
+      run: (params = []) => {
+        return dbApi.run(sql, params);
+      }
+    };
+  },
+  
+  // 查询所有
+  all: (sql, params = []) => {
+    // 简化实现：根据SQL解析查询
+    if (sql.includes('FROM applications')) {
+      let results = [...db.applications];
+      
+      if (sql.includes('shuttle_name LIKE')) {
+        const param = params.shift();
+        results = results.filter(a => a.shuttle_name.includes(param.replace(/%/g, '')));
+      }
+      if (sql.includes('tos_version =')) {
+        results = results.filter(a => a.tos_version === params.shift());
+      }
+      if (sql.includes('apk_status =')) {
+        results = results.filter(a => a.apk_status === params.shift());
+      }
+      if (sql.includes('applicant LIKE')) {
+        const param = params.shift();
+        results = results.filter(a => a.applicant.includes(param.replace(/%/g, '')));
+      }
+      if (sql.includes('status =')) {
+        results = results.filter(a => a.status === params.shift());
+      }
+      
+      return results.sort((a, b) => new Date(b.apply_time) - new Date(a.apply_time));
+    }
+    
+    if (sql.includes('FROM apk_processes')) {
+      if (sql.includes('application_id =')) {
+        return db.apk_processes.filter(p => p.application_id === params[0]);
+      }
+      return db.apk_processes;
+    }
+    
+    if (sql.includes('FROM process_nodes')) {
+      if (sql.includes('process_id =')) {
+        return db.process_nodes.filter(n => n.process_id === params[0]).sort((a, b) => a.node_index - b.node_index);
+      }
+      if (sql.includes('WHERE id =')) {
+        return db.process_nodes.filter(n => n.id === params[0]);
+      }
+      return db.process_nodes;
+    }
+    
+    if (sql.includes('FROM materials')) {
+      if (sql.includes('process_id =')) {
+        return db.materials.filter(m => m.process_id === params[0]);
+      }
+      return db.materials;
+    }
+    
+    if (sql.includes('FROM operation_history')) {
+      let results = [...db.operation_history];
+      if (sql.includes('process_id =')) {
+        results = results.filter(h => h.process_id === params[0]);
+      }
+      return results.sort((a, b) => new Date(b.action_time) - new Date(a.action_time));
+    }
+    
+    return [];
+  },
+  
+  // 查询单条
+  get: (sql, params = []) => {
+    const results = dbApi.all(sql, params);
+    return results[0] || null;
+  },
+  
+  // 执行插入/更新/删除
+  run: (sql, params = []) => {
+    // 解析INSERT语句
+    if (sql.includes('INSERT INTO applications')) {
+      const id = params[0];
+      const application = {
+        id,
+        shuttle_name: params[1],
+        tos_version: params[2],
+        apk_status: params[3],
+        applicant: params[4],
+        apply_time: params[5],
+        status: params[6],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.applications.push(application);
+      saveDb();
+      return { changes: 1 };
+    }
+    
+    if (sql.includes('INSERT INTO apk_processes')) {
+      const id = params[0];
+      const process = {
+        id,
+        application_id: params[1],
+        app_name: params[2],
+        package_name: params[3],
+        version_code: params[4],
+        app_type: params[5],
+        app_category: params[6],
+        apk_url: params[7],
+        test_report_url: params[8],
+        is_system_app: params[9],
+        publish_country_type: params[10],
+        publish_country_detail: params[11],
+        publish_brand: params[12],
+        publish_model: params[13],
+        test_model: params[14],
+        android_version: params[15],
+        filter_india: params[16],
+        is_pa_update: params[17],
+        gray_scale_level: params[18],
+        effective_time: params[19],
+        status: params[20],
+        current_node: params[21] || 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.apk_processes.push(process);
+      saveDb();
+      return { changes: 1 };
+    }
+    
+    if (sql.includes('INSERT INTO process_nodes')) {
+      const id = params[0];
+      const node = {
+        id,
+        process_id: params[1],
+        node_index: params[2],
+        node_name: params[3],
+        status: params[4],
+        operator: params[5],
+        operator_time: params[6],
+        reject_reason: params[7],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.process_nodes.push(node);
+      saveDb();
+      return { changes: 1 };
+    }
+    
+    if (sql.includes('INSERT INTO materials')) {
+      const id = params[0];
+      const material = {
+        id,
+        process_id: params[1],
+        app_name: params[2],
+        short_description: params[3],
+        product_detail: params[4],
+        update_notes: params[5],
+        keywords: params[6],
+        app_icon_url: params[7],
+        hero_image_url: params[8],
+        screenshots: params[9],
+        is_gp_upload: params[10],
+        gp_link: params[11],
+        status: params[12],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.materials.push(material);
+      saveDb();
+      return { changes: 1 };
+    }
+    
+    if (sql.includes('INSERT INTO operation_history')) {
+      const id = params[0];
+      const history = {
+        id,
+        process_id: params[1],
+        operator: params[2],
+        action: params[3],
+        detail: params[4],
+        node_name: params[5],
+        action_time: new Date().toISOString()
+      };
+      db.operation_history.push(history);
+      saveDb();
+      return { changes: 1 };
+    }
+    
+    // UPDATE语句
+    if (sql.includes('UPDATE applications')) {
+      const id = params[params.length - 1];
+      const idx = db.applications.findIndex(a => a.id === id);
+      if (idx !== -1) {
+        if (sql.includes('apk_status')) {
+          db.applications[idx].apk_status = params[0];
+        }
+        if (sql.includes('status')) {
+          db.applications[idx].status = params[0];
+        }
+        db.applications[idx].updated_at = new Date().toISOString();
+        saveDb();
+        return { changes: 1 };
+      }
+    }
+    
+    if (sql.includes('UPDATE apk_processes')) {
+      const id = params[params.length - 1];
+      const idx = db.apk_processes.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        if (sql.includes('current_node')) {
+          db.apk_processes[idx].current_node = params[0];
+        }
+        if (sql.includes('status')) {
+          db.apk_processes[idx].status = params[0];
+        }
+        db.apk_processes[idx].updated_at = new Date().toISOString();
+        saveDb();
+        return { changes: 1 };
+      }
+    }
+    
+    if (sql.includes('UPDATE process_nodes')) {
+      const id = params[params.length - 1];
+      const idx = db.process_nodes.findIndex(n => n.id === id);
+      if (idx !== -1) {
+        if (sql.includes('status')) {
+          db.process_nodes[idx].status = params[0];
+        }
+        if (sql.includes('operator')) {
+          db.process_nodes[idx].operator = params[0];
+        }
+        if (sql.includes('operator_time')) {
+          db.process_nodes[idx].operator_time = params[0];
+        }
+        if (sql.includes('reject_reason')) {
+          db.process_nodes[idx].reject_reason = params[0];
+        }
+        db.process_nodes[idx].updated_at = new Date().toISOString();
+        saveDb();
+        return { changes: 1 };
+      }
+    }
+    
+    if (sql.includes('UPDATE materials')) {
+      const processId = params[params.length - 1];
+      const idx = db.materials.findIndex(m => m.process_id === processId);
+      if (idx !== -1) {
+        const fields = ['app_name', 'short_description', 'product_detail', 'update_notes', 'keywords', 'app_icon_url', 'hero_image_url', 'screenshots', 'is_gp_upload', 'gp_link', 'status'];
+        fields.forEach((field, i) => {
+          if (sql.includes(field)) {
+            db.materials[idx][field] = params[i];
+          }
+        });
+        db.materials[idx].updated_at = new Date().toISOString();
+        saveDb();
+        return { changes: 1 };
+      }
+    }
+    
+    return { changes: 0 };
+  },
+  
+  // 初始化节点数据
+  initNodes: (processId, nodes) => {
+    nodes.forEach((nodeName, index) => {
+      const existingNode = db.process_nodes.find(n => n.process_id === processId && n.node_index === index);
+      if (!existingNode) {
+        db.process_nodes.push({
+          id: 'node-' + processId + '-' + index,
+          process_id: processId,
+          node_index: index,
+          node_name: nodeName,
+          status: index === 0 ? 'processing' : 'pending',
+          operator: null,
+          operator_time: null,
+          reject_reason: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      }
+    });
+    saveDb();
+  }
+};
 
 console.log('数据库初始化完成');
 
-// 导出数据库实例
-module.exports = db;
+module.exports = dbApi;
