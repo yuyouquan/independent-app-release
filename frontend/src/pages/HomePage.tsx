@@ -196,7 +196,7 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
 };
 
 // 待办组件 - 增强版
-const TodoSection: React.FC = () => {
+const TodoSection: React.FC<{ onNavigateToPipeline: (appId: string, node: string) => void }> = ({ onNavigateToPipeline }) => {
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing'>('all');
   const [selectedTodo, setSelectedTodo] = useState<string | null>(null);
 
@@ -329,7 +329,8 @@ const TodoSection: React.FC = () => {
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors ml-3"
                   onClick={(e) => {
                     e.stopPropagation();
-                    alert(`跳转到处理: ${todo.appName} - ${todo.node}`);
+                    // 跳转到对应的应用详情页面
+                    onNavigateToPipeline(todo.id, todo.node);
                   }}
                 >
                   去处理
@@ -496,6 +497,13 @@ const HomePage: React.FC = () => {
     navigate(`/application/${id}`);
   };
 
+  const handleNavigateToPipeline = (todoId: string, node: string) => {
+    // 根据待办项跳转到对应的处理页面
+    console.log('跳转到处理:', todoId, node);
+    // 暂时跳转到申请详情页
+    navigate(`/application/${todoId}`);
+  };
+
   const handleCreateApplication = (data: any) => {
     console.log('提交申请数据:', data);
     alert('申请提交成功！请在待办中查看审核状态。');
@@ -505,7 +513,7 @@ const HomePage: React.FC = () => {
     <div className="space-y-6">
       <ApplicationList onViewDetail={handleViewDetail} onOpenModal={() => setIsModalOpen(true)} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TodoSection />
+        <TodoSection onNavigateToPipeline={handleNavigateToPipeline} />
         <KanbanSection />
       </div>
       <CreateApplicationModal
