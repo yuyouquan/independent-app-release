@@ -47,23 +47,6 @@ const getRollbackNodeIndex = (currentNodeIndex: number): number => {
   return rollbackMap[currentNodeIndex] ?? currentNodeIndex - 1;
 };
 
-// 历史记录类型
-interface HistoryRecord {
-  id: string;
-  actionTime: string;
-  operator: string;
-  action: string;
-  detail: string;
-}
-
-// 模拟历史记录数据
-const mockHistoryRecords: HistoryRecord[] = [
-  { id: '1', actionTime: '2026-02-28 10:30:00', operator: '张三', action: '提交申请', detail: '提交了通道发布申请' },
-  { id: '2', actionTime: '2026-02-28 10:35:00', operator: '系统', action: '自动分配', detail: '分配给审核人A进行通道发布审核' },
-  { id: '3', actionTime: '2026-02-28 11:00:00', operator: '审核人A', action: '审核通过', detail: '通道发布审核通过，进入物料上传阶段' },
-  { id: '4', actionTime: '2026-02-28 14:20:00', operator: '张三', action: '上传物料', detail: '上传了应用图标、置顶大图、详情截图' },
-];
-
 // 审核操作Modal
 const AuditModal: React.FC<{
   isOpen: boolean;
@@ -185,7 +168,7 @@ const ProcessNodeItem: React.FC<{ node: ProcessNode; index: number; isActive: bo
 };
 
 // APK卡片组件
-const APKCard: React.FC<{ process: APKProcess; onAudit: (processId: string, nodeIndex: number) => void }> = ({ process, onAudit }) => {
+const APKCard: React.FC<{ process: APKProcess; onAudit: (processId: string, nodeIndex: number) => void; onViewPipeline: (id: string) => void }> = ({ process, onAudit, onViewPipeline }) => {
   const currentNode = process.nodes[process.currentNode];
   
   return (
@@ -209,7 +192,7 @@ const APKCard: React.FC<{ process: APKProcess; onAudit: (processId: string, node
             包名: {process.packageName} | 版本: {process.versionCode}
           </div>
         </div>
-        <button className="text-blue-600 hover:text-blue-900 text-sm">
+        <button onClick={() => onViewPipeline(process.id)} className="text-blue-600 hover:text-blue-900 text-sm">
           查看详情
         </button>
       </div>
@@ -251,11 +234,12 @@ const ApplicationDetailPage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [auditNodeIndex, setAuditNodeIndex] = useState(0);
-  const [historyRecords] = useState<HistoryRecord[]>(mockHistoryRecords);
 
   // 查找对应的申请数据
   const application = mockApplications.find(app => app.id === id) || mockApplications[0];
   const apkProcess = mockAPKProcess;
+
+  const handleViewPipeline = (id: string) => navigate(`/pipeline/${id}`);
 
   const handleAudit = (_processId: string, nodeIndex: number) => {
     setAuditNodeIndex(nodeIndex);
@@ -346,7 +330,7 @@ const ApplicationDetailPage: React.FC = () => {
         </div>
         
         <div className="space-y-4">
-          <APKCard process={apkProcess} onAudit={handleAudit} />
+          <APKCard process={apkProcess} onAudit={handleAudit} onViewPipeline={handleViewPipeline} />
         </div>
 
         {/* 分页 */}
@@ -359,26 +343,6 @@ const ApplicationDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 历史操作记录 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">历史操作记录</h2>
-        <div className="space-y-3">
-          {historyRecords.map((record) => (
-            <div key={record.id} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-              <div className="w-20 text-xs text-gray-500">{record.actionTime}</div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900">{record.operator}</span>
-                  <span className="text-blue-600 text-sm">{record.action}</span>
-                </div>
-                <div className="text-sm text-gray-600">{record.detail}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 审核操作Modal */}
       <AuditModal
         isOpen={showAuditModal}
         onClose={() => setShowAuditModal(false)}
