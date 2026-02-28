@@ -3,6 +3,114 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { mockAPKProcess, mockApplications } from '../data/mockData';
 import type { APKProcess, ProcessNode } from '../types';
 
+// 历史记录类型
+interface HistoryRecord {
+  id: string;
+  actionTime: string;
+  operator: string;
+  action: string;
+  detail: string;
+}
+
+// 模拟历史记录数据
+const mockHistoryRecords: HistoryRecord[] = [
+  { id: '1', actionTime: '2026-02-28 10:30:00', operator: '张三', action: '提交申请', detail: '提交了通道发布申请' },
+  { id: '2', actionTime: '2026-02-28 10:35:00', operator: '系统', action: '自动分配', detail: '分配给审核人A进行通道发布审核' },
+  { id: '3', actionTime: '2026-02-28 11:00:00', operator: '审核人A', action: '审核通过', detail: '通道发布审核通过，进入物料上传阶段' },
+  { id: '4', actionTime: '2026-02-28 14:20:00', operator: '张三', action: '上传物料', detail: '上传了应用图标、置顶大图、详情截图' },
+];
+
+// 审核操作Modal
+const AuditModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onPass: (comment: string) => void;
+  onReject: (reason: string) => void;
+  nodeName: string;
+}> = ({ isOpen, onClose, onPass, onReject, nodeName }) => {
+  const [mode, setMode] = useState<'pass' | 'reject'>('pass');
+  const [comment, setComment] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose} />
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md">
+          <div className="px-6 py-4 border-b">
+            <h3 className="text-lg font-semibold">审核操作 - {nodeName}</h3>
+          </div>
+          <div className="p-6">
+            <div className="flex gap-4 mb-4">
+              <button
+                onClick={() => setMode('pass')}
+                className={`flex-1 py-2 rounded-lg ${
+                  mode === 'pass' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                ✅ 审核通过
+              </button>
+              <button
+                onClick={() => setMode('reject')}
+                className={`flex-1 py-2 rounded-lg ${
+                  mode === 'reject' ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                ❌ 审核拒绝
+              </button>
+            </div>
+            {mode === 'pass' ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">审核备注</label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={3}
+                  placeholder="可选填写审核备注..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  拒绝原因 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                  placeholder="请输入拒绝原因..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-4 border-t flex justify-end gap-3">
+            <button onClick={onClose} className="px-4 py-2 border rounded-lg">取消</button>
+            <button
+              onClick={() => {
+                if (mode === 'pass') {
+                  onPass(comment);
+                } else {
+                  onReject(rejectReason);
+                }
+              }}
+              disabled={mode === 'reject' && !rejectReason.trim()}
+              className={`px-4 py-2 rounded-lg text-white ${
+                mode === 'pass' ? 'bg-green-600' : 'bg-red-600'
+              } disabled:opacity-50`}
+            >
+              确认
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // 流程节点组件
 const ProcessNodeItem: React.FC<{ node: ProcessNode; index: number; isActive: boolean }> = ({ node, index, isActive }) => {
   const statusStyles = {
@@ -33,7 +141,9 @@ const ProcessNodeItem: React.FC<{ node: ProcessNode; index: number; isActive: bo
 };
 
 // APK卡片组件
-const APKCard: React.FC<{ process: APKProcess }> = ({ process }) => {
+const APKCard: React.FC<{ process: APKProcess; onAudit: (processId: string, nodeIndex: number) => void }> = ({ process, onAudit }) => {
+  const currentNode = process.nodes[process.currentNode];
+  
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start gap-4">
@@ -74,6 +184,18 @@ const APKCard: React.FC<{ process: APKProcess }> = ({ process }) => {
           ))}
         </div>
       </div>
+      
+      {/* 审核操作按钮 - 仅当前处理人可见 */}
+      {currentNode && currentNode.status === 'processing' && (
+        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end gap-2">
+          <button
+            onClick={() => onAudit(process.id, process.currentNode)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+          >
+            审核操作
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -83,10 +205,28 @@ const ApplicationDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [showAuditModal, setShowAuditModal] = useState(false);
+  const [auditNodeIndex, setAuditNodeIndex] = useState(0);
+  const [historyRecords] = useState<HistoryRecord[]>(mockHistoryRecords);
 
   // 查找对应的申请数据
   const application = mockApplications.find(app => app.id === id) || mockApplications[0];
   const apkProcess = mockAPKProcess;
+
+  const handleAudit = (_processId: string, nodeIndex: number) => {
+    setAuditNodeIndex(nodeIndex);
+    setShowAuditModal(true);
+  };
+
+  const handleAuditPass = (comment: string) => {
+    alert(`审核通过！备注: ${comment || '无'}\n\n✅ 飞书通知：申请人张三\n📝 流程将自动推进到下一节点`);
+    setShowAuditModal(false);
+  };
+
+  const handleAuditReject = (reason: string) => {
+    alert(`审核拒绝！\n❌ 拒绝原因: ${reason}\n\n📝 流程将回退，申请人需重新修改`);
+    setShowAuditModal(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -140,7 +280,7 @@ const ApplicationDetailPage: React.FC = () => {
         </div>
         
         <div className="space-y-4">
-          <APKCard process={apkProcess} />
+          <APKCard process={apkProcess} onAudit={handleAudit} />
         </div>
 
         {/* 分页 */}
@@ -152,6 +292,34 @@ const ApplicationDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* 历史操作记录 */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">历史操作记录</h2>
+        <div className="space-y-3">
+          {historyRecords.map((record) => (
+            <div key={record.id} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
+              <div className="w-20 text-xs text-gray-500">{record.actionTime}</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">{record.operator}</span>
+                  <span className="text-blue-600 text-sm">{record.action}</span>
+                </div>
+                <div className="text-sm text-gray-600">{record.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 审核操作Modal */}
+      <AuditModal
+        isOpen={showAuditModal}
+        onClose={() => setShowAuditModal(false)}
+        onPass={handleAuditPass}
+        onReject={handleAuditReject}
+        nodeName={apkProcess.nodes[auditNodeIndex]?.name || '审核'}
+      />
     </div>
   );
 };
