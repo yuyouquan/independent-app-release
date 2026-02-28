@@ -3,6 +3,50 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { mockAPKProcess, mockApplications } from '../data/mockData';
 import type { APKProcess, ProcessNode } from '../types';
 
+// 飞书通知模拟函数
+const sendFeishuNotification = (type: 'pass' | 'reject', data: {
+  appName: string;
+  nodeName: string;
+  operator: string;
+  comment?: string;
+  rejectReason?: string;
+}) => {
+  const time = new Date().toLocaleString('zh-CN');
+  const messages = {
+    pass: [
+      `📢 【审核通过通知】`,
+      `应用: ${data.appName}`,
+      `节点: ${data.nodeName}`,
+      `审核人: ${data.operator}`,
+      `时间: ${time}`,
+      data.comment ? `备注: ${data.comment}` : ''
+    ].filter(Boolean).join('\n'),
+    reject: [
+      `📢 【审核拒绝通知】`,
+      `应用: ${data.appName}`,
+      `节点: ${data.nodeName}`,
+      `审核人: ${data.operator}`,
+      `时间: ${time}`,
+      `❌ 拒绝原因: ${data.rejectReason}`,
+      `⚠️ 请修改后重新提交`
+    ].filter(Boolean).join('\n')
+  };
+  console.log('飞书通知发送:', messages[type]);
+  alert(messages[type]);
+};
+
+// 回退节点映射（审核拒绝时回退到哪个节点）
+const getRollbackNodeIndex = (currentNodeIndex: number): number => {
+  const rollbackMap: Record<number, number> = {
+    1: 0,  // 通道发布审核拒绝 → 回退到通道发布申请
+    3: 2,  // 物料审核拒绝 → 回退到物料上传
+    4: 3,  // 应用上架拒绝 → 可退回物料审核
+    5: 4,  // 业务内测拒绝 → 可退回应用上架
+    6: 5,  // 灰度监控拒绝 → 可退回业务内测
+  };
+  return rollbackMap[currentNodeIndex] ?? currentNodeIndex - 1;
+};
+
 // 历史记录类型
 interface HistoryRecord {
   id: string;
@@ -219,12 +263,34 @@ const ApplicationDetailPage: React.FC = () => {
   };
 
   const handleAuditPass = (comment: string) => {
-    alert(`审核通过！备注: ${comment || '无'}\n\n✅ 飞书通知：申请人张三\n📝 流程将自动推进到下一节点`);
+    // 审核通过逻辑 - 推进到下一节点
+    const currentNodeName = apkProcess.nodes[auditNodeIndex]?.name || '';
+    
+    alert(`✅ 审核通过！\n\n节点: ${currentNodeName}\n备注: ${comment || '无'}\n\n📝 流程将自动推进到下一节点\n\n📢 飞书通知已发送给: 申请人${application.applicant}`);
+    
+    sendFeishuNotification('pass', {
+      appName: apkProcess.appName,
+      nodeName: currentNodeName,
+      operator: '当前审核人',
+      comment
+    });
     setShowAuditModal(false);
   };
 
   const handleAuditReject = (reason: string) => {
-    alert(`审核拒绝！\n❌ 拒绝原因: ${reason}\n\n📝 流程将回退，申请人需重新修改`);
+    const currentNode = apkProcess.nodes[auditNodeIndex];
+    const currentNodeName = currentNode?.name || '';
+    const rollbackNode = getRollbackNodeIndex(auditNodeIndex);
+    const rollbackNodeName = apkProcess.nodes[rollbackNode]?.name || '上一节点';
+    
+    alert(`❌ 审核拒绝！\n\n节点: ${currentNodeName}\n拒绝原因: ${reason}\n\n↩️ 流程将回退到: ${rollbackNodeName}\n\n📢 飞书通知已发送给: 申请人${application.applicant}`);
+    
+    sendFeishuNotification('reject', {
+      appName: apkProcess.appName,
+      nodeName: currentNodeName,
+      operator: '当前审核人',
+      rejectReason: reason
+    });
     setShowAuditModal(false);
   };
 
