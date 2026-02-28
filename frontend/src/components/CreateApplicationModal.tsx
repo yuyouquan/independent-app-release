@@ -161,6 +161,14 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
 
   if (!isOpen) return null;
 
+  // 自动生成班车名称（时间戳格式）
+  const generateShuttleName = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const timeStr = String(now.getHours()).padStart(2, '0') + String(now.getMinutes()).padStart(2, '0');
+    return `班车-${dateStr}-${timeStr}`;
+  };
+
   // 验证步骤1 - 班车信息
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -329,15 +337,24 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       班车名称 <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={shuttleData.shuttleName}
-                      onChange={(e) => setShuttleData(prev => ({ ...prev, shuttleName: e.target.value }))}
-                      placeholder="如: 班车-20260228-001"
-                      className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                        errors.shuttleName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={shuttleData.shuttleName}
+                        onChange={(e) => setShuttleData(prev => ({ ...prev, shuttleName: e.target.value }))}
+                        placeholder="如: 班车-20260228-1430"
+                        className={`flex-1 border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                          errors.shuttleName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShuttleData(prev => ({ ...prev, shuttleName: generateShuttleName() }))}
+                        className="px-3 py-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 text-sm whitespace-nowrap"
+                      >
+                        自动生成
+                      </button>
+                    </div>
                     {errors.shuttleName && <p className="text-red-500 text-xs mt-1">{errors.shuttleName}</p>}
                   </div>
                   
