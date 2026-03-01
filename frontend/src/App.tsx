@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { Search, Plus, Eye, ChevronDown, ArrowLeft, CheckCircle, XCircle, Clock, AlertCircle, Upload, X } from 'lucide-react';
 import { mockApplications, mockTodos, shuttleOptions, tosVersionOptions, apkStatusOptions, Application, APKItem, TodoItem } from './data/mockData';
 import { 
@@ -719,7 +720,7 @@ function AddAppModal({ isOpen, onClose, onAdd }: AddAppModalProps) {
 
   const availableApps = [
     { id: 'app1', icon: '🎵', name: 'Spotify', package: 'com.spotify.music', type: 'Music' },
-    { id: 'app2', icon: '💬', name: 'Telegram', package: 'org: 'Social'.telegram', type },
+    { id: 'app2', icon: '💬', name: 'Telegram', package: 'org.telegram.messenger', type: 'Social' },
     { id: 'app3', icon: '📸', name: 'Instagram', package: 'com.instagram.android', type: 'Social' },
     { id: 'app4', icon: '📺', name: 'YouTube', package: 'com.google.android.youtube', type: 'Video' },
     { id: 'app5', icon: '🐦', name: 'Twitter', package: 'com.twitter.android', type: 'Social' },
