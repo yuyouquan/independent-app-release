@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockAPKProcess, mockApplications } from '../data/mockData';
 import { apk制品List } from '../components/CreateApplicationModal';
-import type { APKProcess, ProcessNode } from '../types';
+import { ChannelReviewModal } from '../components/ChannelReviewModal';
+import { MaterialUploadModal } from '../components/MaterialUploadModal';
+import { MaterialReviewModal } from '../components/MaterialReviewModal';
+import type { APKProcess, ProcessNode, ChannelApplyData, MaterialUploadData } from '../types';
 
 // 添加应用Modal
 const AddAppModal: React.FC<{
@@ -306,16 +309,75 @@ const ApplicationDetailPage: React.FC = () => {
   const [showAuditModal, setShowAuditModal] = useState(false);
   const [auditNodeIndex, setAuditNodeIndex] = useState(0);
   const [showAddAppModal, setShowAddAppModal] = useState(false);
+  
+  // 新增：各节点独立Modal状态
+  const [showChannelReviewModal, setShowChannelReviewModal] = useState(false);
+  const [showMaterialUploadModal, setShowMaterialUploadModal] = useState(false);
+  const [showMaterialReviewModal, setShowMaterialReviewModal] = useState(false);
+  
+  // 当前审核者角色 (用于物料审核双重审核)
+  const [currentReviewer] = useState<'operator' | 'boss'>('operator');
 
   // 查找对应的申请数据
   const application = mockApplications.find(app => app.id === id) || mockApplications[0];
   const apkProcess = mockAPKProcess;
 
+  // 模拟通道申请数据
+  const mockChannelApplyData: ChannelApplyData = {
+    appName: apkProcess.appName,
+    packageName: apkProcess.packageName,
+    appType: apkProcess.appType || 'Social',
+    versionCode: apkProcess.versionCode,
+    versionName: apkProcess.versionName || '1.0.0',
+    apkUrl: 'https://制品库/example.apk',
+    appCategory: 'Social',
+    isSystemApp: false,
+    countryType: 'include',
+    countries: ['NG', 'KE', 'GH'],
+    brandType: 'include',
+    brands: ['Tecno', 'Infinix'],
+    deviceType: 'all',
+    devices: [],
+    betaDeviceType: 'include',
+    betaDevices: ['X6841_H6941', 'X6858_H8917'],
+    androidVersionType: 'include',
+    androidVersions: ['Android 14', 'Android 15', 'Android 16'],
+    tosVersionType: 'include',
+    tosVersions: ['tOS 16.1.0', 'tOS 16.0.5'],
+    filterIndia: false,
+    isPAUpdate: true,
+    grayScaleLevel: 50000,
+    effectiveTime: { start: '2026-03-01', end: '2026-03-31' },
+    materials: [
+      { language: 'en', languageName: '英语', appName: 'WhatsApp', shortDescription: 'Simple messaging app', productDetail: 'Best messaging app', updateDescription: 'Bug fixes', keywords: ['chat', 'social'], isGP上架: true, gpLink: 'https://play.google.com/store/apps/details?id=com.whatsapp' }
+    ],
+    status: 'processing'
+  };
+
+  // 模拟物料上传数据
+  const mockMaterialUploadData: MaterialUploadData = {
+    ...mockChannelApplyData,
+    status: 'processing'
+  };
+
   const handleViewPipeline = (id: string) => navigate(`/pipeline/${id}`);
 
+  // 根据节点类型打开对应Modal
   const handleAudit = (_processId: string, nodeIndex: number) => {
+    const nodeName = apkProcess.nodes[nodeIndex]?.name || '';
     setAuditNodeIndex(nodeIndex);
-    setShowAuditModal(true);
+    
+    // 根据不同节点打开不同的Modal
+    if (nodeName === '通道发布审核') {
+      setShowChannelReviewModal(true);
+    } else if (nodeName === '物料上传') {
+      setShowMaterialUploadModal(true);
+    } else if (nodeName === '物料审核') {
+      setShowMaterialReviewModal(true);
+    } else {
+      // 其他节点使用通用审核Modal
+      setShowAuditModal(true);
+    }
   };
 
   const handleAddApp = (app: { name: string; packageName: string; version: string }) => {
@@ -426,6 +488,57 @@ const ApplicationDetailPage: React.FC = () => {
         onReject={handleAuditReject}
         nodeName={apkProcess.nodes[auditNodeIndex]?.name || '审核'}
       />
+      
+      {/* 通道发布审核Modal */}
+      <ChannelReviewModal
+        isOpen={showChannelReviewModal}
+        onClose={() => setShowChannelReviewModal(false)}
+        onPass={(comment) => {
+          alert(`✅ 通道发布审核通过！\n\n备注: ${comment || '无'}\n\n📢 飞书通知已发送给申请人`);
+          setShowChannelReviewModal(false);
+        }}
+        onReject={(reason) => {
+          alert(`❌ 通道发布审核拒绝！\n\n拒绝原因: ${reason}\n\n↩️ 流程将回退到通道发布申请节点\n\n📢 飞书通知已发送给申请人`);
+          setShowChannelReviewModal(false);
+        }}
+        applyData={mockChannelApplyData}
+      />
+      
+      {/* 物料上传Modal */}
+      <MaterialUploadModal
+        isOpen={showMaterialUploadModal}
+        onClose={() => setShowMaterialUploadModal(false)}
+        onSubmit={(_data) => {
+          alert(`✅ 物料上传成功！\n\n📢 飞书通知已发送给物料审核人`);
+          setShowMaterialUploadModal(false);
+        }}
+        initialData={mockMaterialUploadData}
+      />
+      
+      {/* 物料审核Modal (运营+老板双重审核) */}
+      <MaterialReviewModal
+        isOpen={showMaterialReviewModal}
+        onClose={() => setShowMaterialReviewModal(false)}
+        onOperatorPass={(comment) => {
+          alert(`✅ 运营审核通过！\n\n备注: ${comment || '无'}\n\n📢 通知老板进行最终审核`);
+          setShowMaterialReviewModal(false);
+        }}
+        onOperatorReject={(reason) => {
+          alert(`❌ 运营审核拒绝！\n\n拒绝原因: ${reason}\n\n↩️ 流程将回退到物料上传节点\n\n📢 飞书通知已发送给申请人`);
+          setShowMaterialReviewModal(false);
+        }}
+        onBossPass={(comment) => {
+          alert(`✅ 老板审核通过！\n\n备注: ${comment || '无'}\n\n📝 流程将推进到应用上架节点\n\n📢 飞书通知已发送给申请人`);
+          setShowMaterialReviewModal(false);
+        }}
+        onBossReject={(reason) => {
+          alert(`❌ 老板审核拒绝！\n\n拒绝原因: ${reason}\n\n↩️ 流程将回退到物料上传节点\n\n📢 飞书通知已发送给申请人`);
+          setShowMaterialReviewModal(false);
+        }}
+        materialData={mockMaterialUploadData}
+        currentReviewer={currentReviewer}
+      />
+      
       <AddAppModal
         isOpen={showAddAppModal}
         onClose={() => setShowAddAppModal(false)}
