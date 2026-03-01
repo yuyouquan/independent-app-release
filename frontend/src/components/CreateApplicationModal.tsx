@@ -68,6 +68,16 @@ const VersionSelect: React.FC<VersionSelectProps> = ({ value, onChange, options,
 
 // ==================== 类型定义 ====================
 
+// 语言选项
+const languageOptions = [
+  { code: 'en', name: '英语', required: true },
+  { code: 'ru', name: '俄语', required: false },
+  { code: 'pt', name: '葡萄牙语', required: false },
+  { code: 'es', name: '西班牙语', required: false },
+  { code: 'ar', name: '阿语', required: false },
+  { code: 'ko', name: '韩语', required: false },
+];
+
 // 应用类型选项
 export const appTypeOptions = [
   '社交', '工具', '娱乐', '购物', '旅游', '教育', '金融', '健康', '新闻', '其他'
@@ -167,16 +177,21 @@ interface AppFormData {
 }
 
 interface MaterialFormData {
-  appName: string;
-  shortDescription: string;
-  productDetail: string;
-  updateNotes: string;
-  keywords: string[];
-  appIcon: File | null;
-  heroImage: File | null;
-  screenshots: File[];
-  isGP上架: 'yes' | 'no';
-  gpLink: string;
+  materials: {
+    [language: string]: {
+      appName: string;
+      shortDescription: string;
+      productDetail: string;
+      updateNotes: string;
+      keywords: string[];
+      appIcon: File | null;
+      heroImage: File | null;
+      screenshots: File[];
+      isGP上架: 'yes' | 'no';
+      gpLink: string;
+    };
+  };
+  activeLanguage: string; // 当前编辑的语言
 }
 
 interface CreateApplicationModalProps {
@@ -217,16 +232,21 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
     effectiveTime: ''
   });
   const [materialData, setMaterialData] = useState<MaterialFormData>({
-    appName: '',
-    shortDescription: '',
-    productDetail: '',
-    updateNotes: '',
-    keywords: [],
-    appIcon: null,
-    heroImage: null,
-    screenshots: [],
-    isGP上架: 'no',
-    gpLink: ''
+    materials: {
+      en: {
+        appName: '',
+        shortDescription: '',
+        productDetail: '',
+        updateNotes: '',
+        keywords: [],
+        appIcon: null,
+        heroImage: null,
+        screenshots: [],
+        isGP上架: 'no',
+        gpLink: ''
+      }
+    },
+    activeLanguage: 'en'
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -281,14 +301,17 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
   // 验证步骤3 - 物料信息
   const validateStep3 = () => {
     const newErrors: Record<string, string> = {};
-    if (!materialData.shortDescription.trim()) newErrors.shortDescription = '请输入一句话描述';
-    if (!materialData.productDetail.trim()) newErrors.productDetail = '请输入产品详情';
-    if (!materialData.updateNotes.trim()) newErrors.updateNotes = '请输入更新说明';
-    if (materialData.keywords.length === 0) newErrors.keywords = '请选择关键词(1-5个)';
-    if (!materialData.appIcon) newErrors.appIcon = '请上传应用图标';
-    if (!materialData.heroImage) newErrors.heroImage = '请上传置顶大图';
-    if (materialData.screenshots.length === 0) newErrors.screenshots = '请上传详情截图(3-5张)';
-    if (materialData.isGP上架 === 'yes' && !materialData.gpLink.trim()) {
+    const currentLang = materialData.activeLanguage;
+    const currentMaterial = materialData.materials[currentLang] || materialData.materials['en'];
+    
+    if (!currentMaterial.shortDescription.trim()) newErrors.shortDescription = '请输入一句话描述';
+    if (!currentMaterial.productDetail.trim()) newErrors.productDetail = '请输入产品详情';
+    if (!currentMaterial.updateNotes.trim()) newErrors.updateNotes = '请输入更新说明';
+    if (currentMaterial.keywords.length === 0) newErrors.keywords = '请选择关键词(1-5个)';
+    if (!currentMaterial.appIcon) newErrors.appIcon = '请上传应用图标';
+    if (!currentMaterial.heroImage) newErrors.heroImage = '请上传置顶大图';
+    if (currentMaterial.screenshots.length === 0) newErrors.screenshots = '请上传详情截图(3-5张)';
+    if (currentMaterial.isGP上架 === 'yes' && !currentMaterial.gpLink.trim()) {
       newErrors.gpLink = '请输入GP链接';
     }
     
@@ -327,11 +350,73 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
         grayScaleLevel: '', effectiveTime: ''
       });
       setMaterialData({
-        appName: '', shortDescription: '', productDetail: '', updateNotes: '',
-        keywords: [], appIcon: null, heroImage: null, screenshots: [],
-        isGP上架: 'no', gpLink: ''
+        materials: {
+          en: {
+            appName: '', shortDescription: '', productDetail: '', updateNotes: '',
+            keywords: [], appIcon: null, heroImage: null, screenshots: [],
+            isGP上架: 'no', gpLink: ''
+          }
+        },
+        activeLanguage: 'en'
       });
     }
+  };
+
+  // 获取当前语言的物料数据
+  const getCurrentMaterial = () => {
+    const lang = materialData.activeLanguage;
+    return materialData.materials[lang] || materialData.materials['en'];
+  };
+
+  // 更新当前语言的物料数据
+  const updateCurrentMaterial = (field: string, value: any) => {
+    const lang = materialData.activeLanguage;
+    setMaterialData(prev => ({
+      ...prev,
+      materials: {
+        ...prev.materials,
+        [lang]: {
+          ...(prev.materials[lang] || prev.materials['en']),
+          [field]: value
+        }
+      }
+    }));
+  };
+
+  // 切换语言
+  const switchLanguage = (lang: string) => {
+    // 如果该语言还没有数据，初始化它
+    if (!materialData.materials[lang]) {
+      setMaterialData(prev => ({
+        ...prev,
+        activeLanguage: lang,
+        materials: {
+          ...prev.materials,
+          [lang]: {
+            appName: '',
+            shortDescription: '',
+            productDetail: '',
+            updateNotes: '',
+            keywords: [],
+            appIcon: null,
+            heroImage: null,
+            screenshots: [],
+            isGP上架: 'no',
+            gpLink: ''
+          }
+        }
+      }));
+    } else {
+      setMaterialData(prev => ({
+        ...prev,
+        activeLanguage: lang
+      }));
+    }
+  };
+
+  // 添加新语言
+  const addLanguage = (langCode: string) => {
+    switchLanguage(langCode);
   };
 
   const handleAPKChange = (apkId: string) => {
@@ -850,9 +935,47 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
             {/* 步骤3: 物料信息 */}
             {step === 3 && (
               <div className="space-y-6">
+                {/* 语言Tab切换 */}
+                <div className="bg-gray-50 px-4 py-3 border-b flex items-center gap-2 overflow-x-auto">
+                  {languageOptions.map(lang => (
+                    <button
+                      key={lang.code}
+                      onClick={() => switchLanguage(lang.code)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                        materialData.activeLanguage === lang.code 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-white text-gray-600 hover:bg-gray-100 border'
+                      }`}
+                    >
+                      {lang.name}
+                      {lang.required && <span className="text-red-400 ml-1">*</span>}
+                    </button>
+                  ))}
+                  
+                  {/* 添加更多语言 */}
+                  <div className="relative group">
+                    <button className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-600 hover:bg-gray-300">
+                      + 添加语言
+                    </button>
+                    <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg hidden group-hover:block z-10 min-w-32">
+                      {languageOptions
+                        .filter(l => !materialData.materials[l.code])
+                        .map(lang => (
+                          <button
+                            key={lang.code}
+                            onClick={() => addLanguage(lang.code)}
+                            className="block w-full text-left px-4 py-2 text-sm hover:bg-blue-50"
+                          >
+                            {lang.name}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
-                    💡 请上传应用商店展示所需的物料素材。
+                    💡 请上传应用商店展示所需的物料素材。英语为默认语言（必填），其他语言可选。
                   </p>
                 </div>
 
@@ -864,8 +987,8 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={materialData.appName}
-                      onChange={(e) => setMaterialData(prev => ({ ...prev, appName: e.target.value }))}
+                      value={getCurrentMaterial().appName}
+                      onChange={(e) => updateCurrentMaterial('appName', e.target.value)}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     />
                   </div>
@@ -875,8 +998,8 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                       一句话描述 <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      value={materialData.shortDescription}
-                      onChange={(e) => setMaterialData(prev => ({ ...prev, shortDescription: e.target.value }))}
+                      value={getCurrentMaterial().shortDescription}
+                      onChange={(e) => updateCurrentMaterial('shortDescription', e.target.value)}
                       rows={2}
                       placeholder="一句话介绍你的应用（建议20字以内）"
                       className={`w-full border rounded-lg px-3 py-2 ${
@@ -890,8 +1013,8 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                       产品详情 <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      value={materialData.productDetail}
-                      onChange={(e) => setMaterialData(prev => ({ ...prev, productDetail: e.target.value }))}
+                      value={getCurrentMaterial().productDetail}
+                      onChange={(e) => updateCurrentMaterial('productDetail', e.target.value)}
                       rows={4}
                       placeholder="详细描述应用功能和特点"
                       className={`w-full border rounded-lg px-3 py-2 ${
@@ -905,8 +1028,8 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                       更新说明 <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      value={materialData.updateNotes}
-                      onChange={(e) => setMaterialData(prev => ({ ...prev, updateNotes: e.target.value }))}
+                      value={getCurrentMaterial().updateNotes}
+                      onChange={(e) => updateCurrentMaterial('updateNotes', e.target.value)}
                       rows={3}
                       placeholder="本次更新内容"
                       className={`w-full border rounded-lg px-3 py-2 ${
@@ -924,15 +1047,16 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                         <label key={kw} className="inline-flex items-center mr-4 mb-1">
                           <input
                             type="checkbox"
-                            checked={materialData.keywords.includes(kw)}
+                            checked={getCurrentMaterial().keywords.includes(kw)}
                             onChange={(e) => {
-                              if (e.target.checked && materialData.keywords.length < 5) {
-                                setMaterialData(prev => ({ ...prev, keywords: [...prev.keywords, kw] }));
+                              const current = getCurrentMaterial().keywords;
+                              if (e.target.checked && current.length < 5) {
+                                updateCurrentMaterial('keywords', [...current, kw]);
                               } else if (!e.target.checked) {
-                                setMaterialData(prev => ({ ...prev, keywords: prev.keywords.filter(k => k !== kw) }));
+                                updateCurrentMaterial('keywords', current.filter((k: string) => k !== kw));
                               }
                             }}
-                            disabled={!materialData.keywords.includes(kw) && materialData.keywords.length >= 5}
+                            disabled={!getCurrentMaterial().keywords.includes(kw) && getCurrentMaterial().keywords.length >= 5}
                             className="mr-1"
                           />
                           {kw}
@@ -957,16 +1081,16 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                       <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
                         errors.appIcon ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}>
-                        {materialData.appIcon ? (
+                        {getCurrentMaterial().appIcon ? (
                           <div className="space-y-2">
                             <img 
-                              src={URL.createObjectURL(materialData.appIcon)} 
+                              src={URL.createObjectURL(getCurrentMaterial().appIcon as File)} 
                               alt="应用图标预览" 
                               className="w-16 h-16 mx-auto object-cover rounded-lg border"
                             />
-                            <div className="text-sm text-green-600">✓ {materialData.appIcon.name}</div>
+                            <div className="text-sm text-green-600">✓ {(getCurrentMaterial().appIcon as File).name}</div>
                             <button 
-                              onClick={() => setMaterialData(prev => ({ ...prev, appIcon: null }))}
+                              onClick={() => updateCurrentMaterial('appIcon', null)}
                               className="text-xs text-red-500 hover:text-red-700"
                             >
                               重新上传
@@ -977,10 +1101,7 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => setMaterialData(prev => ({ 
-                                ...prev, 
-                                appIcon: e.target.files ? e.target.files[0] : null 
-                              }))}
+                              onChange={(e) => updateCurrentMaterial('appIcon', e.target.files ? e.target.files[0] : null)}
                               className="hidden"
                               id="appIcon-upload"
                             />
@@ -1001,16 +1122,16 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                       <div className={`border-2 border-dashed rounded-lg p-4 text-center ${
                         errors.heroImage ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}>
-                        {materialData.heroImage ? (
+                        {getCurrentMaterial().heroImage ? (
                           <div className="space-y-2">
                             <img 
-                              src={URL.createObjectURL(materialData.heroImage)} 
+                              src={URL.createObjectURL(getCurrentMaterial().heroImage as File)} 
                               alt="置顶大图预览" 
                               className="w-full h-20 mx-auto object-cover rounded-lg border"
                             />
-                            <div className="text-sm text-green-600">✓ {materialData.heroImage.name}</div>
+                            <div className="text-sm text-green-600">✓ {(getCurrentMaterial().heroImage as File).name}</div>
                             <button 
-                              onClick={() => setMaterialData(prev => ({ ...prev, heroImage: null }))}
+                              onClick={() => updateCurrentMaterial('heroImage', null)}
                               className="text-xs text-red-500 hover:text-red-700"
                             >
                               重新上传
@@ -1021,10 +1142,7 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(e) => setMaterialData(prev => ({ 
-                                ...prev, 
-                                heroImage: e.target.files ? e.target.files[0] : null 
-                              }))}
+                              onChange={(e) => updateCurrentMaterial('heroImage', e.target.files ? e.target.files[0] : null)}
                               className="hidden"
                               id="heroImage-upload"
                             />
@@ -1049,30 +1167,27 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                           type="file"
                           accept="image/*"
                           multiple
-                          onChange={(e) => setMaterialData(prev => ({ 
-                            ...prev, 
-                            screenshots: e.target.files ? Array.from(e.target.files) : []
-                          }))}
+                          onChange={(e) => updateCurrentMaterial('screenshots', e.target.files ? Array.from(e.target.files) : [])}
                           className="hidden"
                           id="screenshots-upload"
                         />
                         <label htmlFor="screenshots-upload" className="cursor-pointer text-blue-600 hover:text-blue-700">
                           点击上传
                         </label>
-                        {materialData.screenshots.length > 0 && (
+                        {getCurrentMaterial().screenshots.length > 0 && (
                           <div className="mt-2 space-y-1">
-                            <div className="text-sm text-green-600">✓ 已选择 {materialData.screenshots.length} 张</div>
+                            <div className="text-sm text-green-600">✓ 已选择 {getCurrentMaterial().screenshots.length} 张</div>
                             <div className="flex flex-wrap gap-1 justify-center mt-1">
-                              {materialData.screenshots.slice(0, 3).map((file, idx) => (
+                              {getCurrentMaterial().screenshots.slice(0, 3).map((file, idx) => (
                                 <img 
                                   key={idx}
-                                  src={URL.createObjectURL(file)} 
+                                  src={URL.createObjectURL(file as File)} 
                                   alt={`截图${idx + 1}`}
                                   className="w-10 h-10 object-cover rounded border"
                                 />
                               ))}
-                              {materialData.screenshots.length > 3 && (
-                                <span className="text-xs text-gray-500 self-center">+{materialData.screenshots.length - 3}张</span>
+                              {getCurrentMaterial().screenshots.length > 3 && (
+                                <span className="text-xs text-gray-500 self-center">+{getCurrentMaterial().screenshots.length - 3}张</span>
                               )}
                             </div>
                           </div>
@@ -1092,8 +1207,8 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                         type="radio"
                         name="isGP上架"
                         value="yes"
-                        checked={materialData.isGP上架 === 'yes'}
-                        onChange={(e) => setMaterialData(prev => ({ ...prev, isGP上架: e.target.value as 'yes' | 'no' }))}
+                        checked={getCurrentMaterial().isGP上架 === 'yes'}
+                        onChange={(e) => updateCurrentMaterial('isGP上架', e.target.value)}
                         className="mr-1"
                       />
                       是，需要上架到Google Play
@@ -1103,23 +1218,23 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                         type="radio"
                         name="isGP上架"
                         value="no"
-                        checked={materialData.isGP上架 === 'no'}
-                        onChange={(e) => setMaterialData(prev => ({ ...prev, isGP上架: e.target.value as 'yes' | 'no' }))}
+                        checked={getCurrentMaterial().isGP上架 === 'no'}
+                        onChange={(e) => updateCurrentMaterial('isGP上架', e.target.value)}
                         className="mr-1"
                       />
                       否
                     </label>
                   </div>
 
-                  {materialData.isGP上架 === 'yes' && (
+                  {getCurrentMaterial().isGP上架 === 'yes' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         GP链接 <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="url"
-                        value={materialData.gpLink}
-                        onChange={(e) => setMaterialData(prev => ({ ...prev, gpLink: e.target.value }))}
+                        value={getCurrentMaterial().gpLink}
+                        onChange={(e) => updateCurrentMaterial('gpLink', e.target.value)}
                         placeholder="https://play.google.com/store/apps/details?id=..."
                         className={`w-full border rounded-lg px-3 py-2 ${
                           errors.gpLink ? 'border-red-500' : 'border-gray-300'
