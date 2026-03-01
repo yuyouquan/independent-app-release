@@ -9,6 +9,7 @@ import {
   X,
   Upload,
   FileText,
+  File,
   Tag,
   AlertTriangle
 } from 'lucide-react';
@@ -626,10 +627,110 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         )}
       </div>
 
-      {/* 通道发布详情 */}
+      {/* 申请信息汇总 - 只读展示 */}
       <div>
-        <h4 className="font-medium mb-4">通道发布详情</h4>
-        {renderChannelApplyForm()}
+        <h4 className="font-medium mb-4 flex items-center gap-2">
+          <FileText className="w-4 h-4" />
+          申请信息汇总
+        </h4>
+        <div className="bg-white border rounded-lg p-4 space-y-4">
+          {/* 应用基本信息 */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-gray-500">应用名称</div>
+              <div className="font-medium">{apkProcess.appName}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">应用包名</div>
+              <div className="font-medium">{apkProcess.packageName}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">应用类型</div>
+              <div className="font-medium">{apkProcess.appType || 'Social'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">版本号</div>
+              <div className="font-medium">{apkProcess.versionCode || '22651'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">应用分类</div>
+              <div className="font-medium">Social</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">系统应用</div>
+              <div className="font-medium">否</div>
+            </div>
+          </div>
+          
+          <hr className="my-2" />
+          
+          {/* 过滤条件 */}
+          <div>
+            <div className="text-sm font-medium text-gray-700 mb-2">过滤条件</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <div className="text-xs text-gray-500">国家</div>
+                <div className="font-medium">全部国家</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">品牌</div>
+                <div className="font-medium">全部品牌</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">机型</div>
+                <div className="font-medium">全部机型</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">tOS版本</div>
+                <div className="font-medium">全部版本</div>
+              </div>
+            </div>
+          </div>
+          
+          <hr className="my-2" />
+          
+          {/* APK文件信息 */}
+          <div>
+            <div className="text-sm font-medium text-gray-700 mb-2">APK文件</div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <File className="w-8 h-8 text-blue-500" />
+              <div>
+                <div className="font-medium">{apkProcess.appName}.apk</div>
+                <div className="text-xs text-gray-500">版本: {apkProcess.versionCode || '22651'}</div>
+              </div>
+              <button className="ml-auto text-blue-600 text-sm hover:underline">
+                下载
+              </button>
+            </div>
+          </div>
+          
+          {/* 测试报告 */}
+          <div>
+            <div className="text-sm font-medium text-gray-700 mb-2">测试报告</div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <FileText className="w-8 h-8 text-green-500" />
+              <div>
+                <div className="font-medium">测试报告.pdf</div>
+                <div className="text-xs text-gray-500">已上传</div>
+              </div>
+              <button className="ml-auto text-blue-600 text-sm hover:underline">
+                查看
+              </button>
+            </div>
+          </div>
+          
+          {/* 申请人信息 */}
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div>
+              <div className="text-xs text-gray-500">申请人</div>
+              <div className="font-medium">{apkProcess.nodes[0]?.operator || '张三'}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500">申请时间</div>
+              <div className="font-medium">{apkProcess.nodes?.[0]?.operatorTime || '2026-03-01 10:00:00'}</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
