@@ -572,7 +572,7 @@ const HomePage: React.FC = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-900">独立三方应用发布系统</h1>
-              <span className="ml-2 text-xs text-gray-500">v2.4</span>
+              <span className="ml-2 text-xs text-gray-500">v2.5</span>
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-500 hover:text-gray-700">
