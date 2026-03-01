@@ -826,6 +826,13 @@ function ChannelApplyModal({
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const [showBrandDropdown, setShowBrandDropdown] = useState(false);
+  const [showDeviceDropdown, setShowDeviceDropdown] = useState(false);
+  const [showBetaDeviceDropdown, setShowBetaDeviceDropdown] = useState(false);
+  const [showAndroidDropdown, setShowAndroidDropdown] = useState(false);
+  const [showTosDropdown, setShowTosDropdown] = useState(false);
   const [formData, setFormData] = useState({
     versionCode: '',
     appCategory: 'Social',
@@ -855,11 +862,69 @@ function ChannelApplyModal({
     }
   });
 
+  // tOS版本根据安卓版本级联
+  const getTosOptionsForAndroid = () => {
+    const androidVersionMap: Record<string, string[]> = {
+      'Android 16': ['tOS 16.1.0'],
+      'Android 15': ['tOS 16.1.0', 'tOS 15.2.0'],
+      'Android 14': ['tOS 15.2.0', 'tOS 14.1.0'],
+      'Android 13': ['tOS 14.1.0', 'tOS 13.1.0'],
+      'Android 12': ['tOS 13.1.0', 'tOS 12.1.0'],
+      'Android 11': ['tOS 12.1.0'],
+    };
+    const selectedAndroid = formData.androidVersionList;
+    if (selectedAndroid.length === 0) return [];
+    const allTos = selectedAndroid.flatMap(v => androidVersionMap[v] || []);
+    return [...new Set(allTos)];
+  };
+
+  // 多选切换
+  const toggleMultiSelect = (field: string, value: string, currentList: string[]) => {
+    const newList = currentList.includes(value)
+      ? currentList.filter(v => v !== value)
+      : [...currentList, value];
+    setFormData({ ...formData, [field]: newList });
+  };
+
+  // 验证基础信息必填字段
+  const validateBasic = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.versionCode) newErrors.versionCode = '请选择应用版本号';
+    if (!formData.appCategory) newErrors.appCategory = '请选择应用分类';
+    if (formData.isPAUpdate === 'yes' && !formData.effectiveTime) newErrors.effectiveTime = '请选择生效时间';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // 验证物料必填字段
+  const validateMaterial = () => {
+    const newErrors: Record<string, string> = {};
+    const mat = formData.materials[activeLang as keyof typeof formData.materials];
+    if (!mat.appName?.trim()) newErrors.matAppName = '请输入应用名称';
+    if (!mat.shortDescription?.trim()) newErrors.matShortDesc = '请输入一句话描述';
+    if (!mat.productDetail?.trim()) newErrors.matProductDetail = '请输入产品详情';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   if (!isOpen) return null;
 
   const handleSave = () => {
+    if (activeTab === 'basic') {
+      if (!validateBasic()) return;
+    } else {
+      if (!validateMaterial()) return;
+    }
     onSave(formData);
     onClose();
+  };
+
+  const handleTabChange = (tab: 'basic' | 'material') => {
+    if (activeTab === 'basic' && tab === 'material') {
+      if (!validateBasic()) return;
+    }
+    setActiveTab(tab);
+    setErrors({});
   };
 
   return (
@@ -972,77 +1037,186 @@ function ChannelApplyModal({
               <div>
                 <h4 className="font-medium mb-4">发布范围</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  {/* 发布国家 */}
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布国家</label>
                     <select 
                       className="w-full border rounded px-3 py-2"
                       value={formData.countryType}
-                      onChange={(e) => setFormData({...formData, countryType: e.target.value})}
+                      onChange={(e) => {
+                        setFormData({...formData, countryType: e.target.value, countryList: []});
+                        setShowCountryDropdown(e.target.value !== 'all');
+                      }}
                     >
                       <option value="all">全部</option>
                       <option value="include">包含</option>
                       <option value="exclude">不包含</option>
                     </select>
+                    {showCountryDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
+                        {countryOptions.map(c => (
+                          <label key={c} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" checked={formData.countryList.includes(c)} onChange={() => toggleMultiSelect('countryList', c, formData.countryList)} />
+                            <span className="text-sm">{c}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {formData.countryType !== 'all' && formData.countryList.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-500">已选: {formData.countryList.join(', ')}</div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* 发布品牌 */}
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
                     <select 
                       className="w-full border rounded px-3 py-2"
                       value={formData.brandType}
-                      onChange={(e) => setFormData({...formData, brandType: e.target.value})}
+                      onChange={(e) => {
+                        setFormData({...formData, brandType: e.target.value, brandList: []});
+                        setShowBrandDropdown(e.target.value !== 'all');
+                      }}
                     >
                       <option value="all">全部</option>
                       <option value="include">包含</option>
                       <option value="exclude">不包含</option>
                     </select>
+                    {showBrandDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
+                        {brandOptions.map(b => (
+                          <label key={b} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" checked={formData.brandList.includes(b)} onChange={() => toggleMultiSelect('brandList', b, formData.brandList)} />
+                            <span className="text-sm">{b}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {formData.brandType !== 'all' && formData.brandList.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-500">已选: {formData.brandList.join(', ')}</div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* 发布机型 */}
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布机型</label>
                     <select 
                       className="w-full border rounded px-3 py-2"
                       value={formData.deviceType}
-                      onChange={(e) => setFormData({...formData, deviceType: e.target.value})}
+                      onChange={(e) => {
+                        setFormData({...formData, deviceType: e.target.value, deviceList: []});
+                        setShowDeviceDropdown(e.target.value !== 'all');
+                      }}
                     >
                       <option value="all">全部</option>
                       <option value="include">包含</option>
                       <option value="exclude">不包含</option>
                     </select>
+                    {showDeviceDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
+                        {deviceOptions.map(d => (
+                          <label key={d} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" checked={formData.deviceList.includes(d)} onChange={() => toggleMultiSelect('deviceList', d, formData.deviceList)} />
+                            <span className="text-sm">{d}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {formData.deviceType !== 'all' && formData.deviceList.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-500">已选: {formData.deviceList.join(', ')}</div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* 内测机型 */}
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">内测机型</label>
                     <select 
                       className="w-full border rounded px-3 py-2"
                       value={formData.betaDeviceType}
-                      onChange={(e) => setFormData({...formData, betaDeviceType: e.target.value})}
+                      onChange={(e) => {
+                        setFormData({...formData, betaDeviceType: e.target.value, betaDeviceList: []});
+                        setShowBetaDeviceDropdown(e.target.value !== 'all');
+                      }}
                     >
                       <option value="all">全部</option>
                       <option value="include">包含</option>
                       <option value="exclude">不包含</option>
                     </select>
+                    {showBetaDeviceDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
+                        {deviceOptions.map(d => (
+                          <label key={d} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" checked={formData.betaDeviceList.includes(d)} onChange={() => toggleMultiSelect('betaDeviceList', d, formData.betaDeviceList)} />
+                            <span className="text-sm">{d}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {formData.betaDeviceType !== 'all' && formData.betaDeviceList.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-500">已选: {formData.betaDeviceList.join(', ')}</div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* 适用安卓版本 */}
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">适用安卓版本</label>
                     <select 
                       className="w-full border rounded px-3 py-2"
                       value={formData.androidVersionType}
-                      onChange={(e) => setFormData({...formData, androidVersionType: e.target.value})}
+                      onChange={(e) => {
+                        setFormData({...formData, androidVersionType: e.target.value, androidVersionList: [], tosVersionList: []});
+                        setShowAndroidDropdown(e.target.value !== 'all');
+                      }}
                     >
                       <option value="all">全部</option>
                       <option value="include">包含</option>
                       <option value="exclude">不包含</option>
                     </select>
+                    {showAndroidDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
+                        {['Android 11', 'Android 12', 'Android 13', 'Android 14', 'Android 15', 'Android 16'].map(v => (
+                          <label key={v} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" checked={formData.androidVersionList.includes(v)} onChange={() => toggleMultiSelect('androidVersionList', v, formData.androidVersionList)} />
+                            <span className="text-sm">{v}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {formData.androidVersionType !== 'all' && formData.androidVersionList.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-500">已选: {formData.androidVersionList.join(', ')}</div>
+                    )}
                   </div>
-                  <div>
+
+                  {/* 适用tOS版本 - 根据安卓版本级联 */}
+                  <div className="relative">
                     <label className="block text-sm font-medium text-gray-700 mb-1">适用tOS版本</label>
                     <select 
                       className="w-full border rounded px-3 py-2"
                       value={formData.tosVersionType}
-                      onChange={(e) => setFormData({...formData, tosVersionType: e.target.value})}
+                      onChange={(e) => {
+                        setFormData({...formData, tosVersionType: e.target.value, tosVersionList: []});
+                        setShowTosDropdown(e.target.value !== 'all');
+                      }}
                     >
                       <option value="all">全部</option>
                       <option value="include">包含</option>
                       <option value="exclude">不包含</option>
                     </select>
+                    {showTosDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
+                        {getTosOptionsForAndroid().length > 0 ? getTosOptionsForAndroid().map(v => (
+                          <label key={v} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" checked={formData.tosVersionList.includes(v)} onChange={() => toggleMultiSelect('tosVersionList', v, formData.tosVersionList)} />
+                            <span className="text-sm">{v}</span>
+                          </label>
+                        )) : (
+                          <div className="p-2 text-xs text-gray-500">请先选择安卓版本</div>
+                        )}
+                      </div>
+                    )}
+                    {formData.tosVersionType !== 'all' && formData.tosVersionList.length > 0 && (
+                      <div className="mt-1 text-xs text-gray-500">已选: {formData.tosVersionList.join(', ')}</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1107,9 +1281,9 @@ function ChannelApplyModal({
                   <button
                     key={lang.code}
                     onClick={() => setActiveLang(lang.code)}
-                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
                   >
-                    {lang.name}
+                    {lang.name} {lang.code === 'en' && <span className="text-red-500 ml-1">*</span>}
                   </button>
                 ))}
               </div>
@@ -1117,58 +1291,180 @@ function ChannelApplyModal({
               {/* 物料表单 */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
-                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入应用名称" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    应用名称 <span className="text-red-500">*</span> (英语必填)
+                  </label>
+                  <input 
+                    type="text" 
+                    className={`w-full border rounded px-3 py-2 ${errors.matAppName ? 'border-red-500' : ''}`} 
+                    placeholder="请输入应用名称"
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.appName || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], appName: e.target.value }
+                      }
+                    })}
+                  />
+                  {errors.matAppName && <p className="text-red-500 text-xs mt-1">{errors.matAppName}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">一句话描述</label>
-                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入一句话描述" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    一句话描述 <span className="text-red-500">*</span>
+                  </label>
+                  <textarea 
+                    className={`w-full border rounded px-3 py-2 ${errors.matShortDesc ? 'border-red-500' : ''}`} 
+                    rows={2} 
+                    placeholder="请输入一句话描述"
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.shortDescription || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], shortDescription: e.target.value }
+                      }
+                    })}
+                  />
+                  {errors.matShortDesc && <p className="text-red-500 text-xs mt-1">{errors.matShortDesc}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">产品详情</label>
-                  <textarea className="w-full border rounded px-3 py-2" rows={4} placeholder="请输入产品详情" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    产品详情 <span className="text-red-500">*</span>
+                  </label>
+                  <textarea 
+                    className={`w-full border rounded px-3 py-2 ${errors.matProductDetail ? 'border-red-500' : ''}`} 
+                    rows={4} 
+                    placeholder="请输入产品详情"
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.productDetail || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], productDetail: e.target.value }
+                      }
+                    })}
+                  />
+                  {errors.matProductDetail && <p className="text-red-500 text-xs mt-1">{errors.matProductDetail}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">更新说明</label>
-                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入更新说明" />
+                  <textarea 
+                    className="w-full border rounded px-3 py-2" 
+                    rows={2} 
+                    placeholder="请输入更新说明"
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.updateDescription || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], updateDescription: e.target.value }
+                      }
+                    })}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
-                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入关键词" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">关键词 (1-5个)</label>
+                  <input 
+                    type="text" 
+                    className="w-full border rounded px-3 py-2" 
+                    placeholder="请输入关键词，用逗号分隔"
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || ''}
+                    onChange={(e) => {
+                      const keywords = e.target.value.split(',').map(k => k.trim()).filter(k => k);
+                      setFormData({
+                        ...formData,
+                        materials: {
+                          ...formData.materials,
+                          [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], keywords }
+                        }
+                      });
+                    }}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">已选: {formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || '无'}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">应用图标</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    应用图标 <span className="text-red-500">*</span> (≥180x180px, 1:1)
+                  </label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
                     <p className="text-sm text-gray-500 mt-1">点击上传图标 (jpg/png, 尺寸≥180*180px)</p>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    置顶大图 <span className="text-red-500">*</span> (1080x594px, ≤2MB)
+                  </label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
                     <p className="text-sm text-gray-500 mt-1">点击上传置顶大图 (1080*594px, ≤2MB)</p>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">详情截图 (3-5张)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    详情截图 <span className="text-red-500">*</span> (3-5张)
+                  </label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图</p>
+                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图 (需要3-5张)</p>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">支持竖屏480x854或横屏854x480</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">是否GP上架</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2">
-                      <input type="radio" name="isGP" value="yes" />
+                      <input 
+                        type="radio" 
+                        name="isGP" 
+                        value="yes"
+                        checked={formData.materials[activeLang as keyof typeof formData.materials]?.isGP上架 === true}
+                        onChange={() => setFormData({
+                          ...formData,
+                          materials: {
+                            ...formData.materials,
+                            [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], isGP上架: true }
+                          }
+                        })}
+                      />
                       是
                     </label>
                     <label className="flex items-center gap-2">
-                      <input type="radio" name="isGP" value="no" defaultChecked />
+                      <input 
+                        type="radio" 
+                        name="isGP" 
+                        value="no"
+                        checked={formData.materials[activeLang as keyof typeof formData.materials]?.isGP上架 !== true}
+                        onChange={() => setFormData({
+                          ...formData,
+                          materials: {
+                            ...formData.materials,
+                            [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], isGP上架: false, gpLink: '' }
+                          }
+                        })}
+                      />
                       否
                     </label>
                   </div>
+                  {formData.materials[activeLang as keyof typeof formData.materials]?.isGP上架 && (
+                    <div className="mt-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">GP链接 <span className="text-red-500">*</span></label>
+                      <input 
+                        type="url" 
+                        className="w-full border rounded px-3 py-2" 
+                        placeholder="https://play.google.com/store/apps/details?id=..."
+                        value={formData.materials[activeLang as keyof typeof formData.materials]?.gpLink || ''}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          materials: {
+                            ...formData.materials,
+                            [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], gpLink: e.target.value }
+                          }
+                        })}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1237,7 +1533,7 @@ function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-900">独立三方应用发布系统</h1>
-              <span className="ml-2 text-xs text-gray-500">v1.0</span>
+              <span className="ml-2 text-xs text-gray-500">v1.1 (迭代增强版)</span>
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-500 hover:text-gray-700 text-sm">通知</button>
