@@ -60,6 +60,11 @@ export const apk制品List = [
   { id: '4', name: 'Instagram_v320.0.0.apk', url: 'https://制品库/instagram/v320.0.0.apk' },
 ];
 
+// 版本号选项（示例）- 从PRD要求的下拉单选
+export const versionCodeOptions = [
+  '1.0.0', '1.0.1', '1.0.2', '1.1.0', '1.1.1', '2.0.0', '2.0.1', '2.1.0', '3.0.0'
+];
+
 // 关键词选项
 export const keywordOptions = [
   '聊天', '社交', '视频', '音乐', '支付', '购物', '新闻', 
@@ -441,15 +446,18 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       版本号 <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={appData.versionCode}
                       onChange={(e) => setAppData(prev => ({ ...prev, versionCode: e.target.value }))}
-                      placeholder="1.0.0"
                       className={`w-full border rounded-lg px-3 py-2 ${
                         errors.versionCode ? 'border-red-500' : 'border-gray-300'
                       }`}
-                    />
+                    >
+                      <option value="">请选择版本号</option>
+                      {versionCodeOptions.map(v => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -882,7 +890,20 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                         errors.appIcon ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}>
                         {materialData.appIcon ? (
-                          <div className="text-sm text-green-600">✓ 已选择: {materialData.appIcon.name}</div>
+                          <div className="space-y-2">
+                            <img 
+                              src={URL.createObjectURL(materialData.appIcon)} 
+                              alt="应用图标预览" 
+                              className="w-16 h-16 mx-auto object-cover rounded-lg border"
+                            />
+                            <div className="text-sm text-green-600">✓ {materialData.appIcon.name}</div>
+                            <button 
+                              onClick={() => setMaterialData(prev => ({ ...prev, appIcon: null }))}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              重新上传
+                            </button>
+                          </div>
                         ) : (
                           <>
                             <input
@@ -913,7 +934,20 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                         errors.heroImage ? 'border-red-500 bg-red-50' : 'border-gray-300'
                       }`}>
                         {materialData.heroImage ? (
-                          <div className="text-sm text-green-600">✓ 已选择: {materialData.heroImage.name}</div>
+                          <div className="space-y-2">
+                            <img 
+                              src={URL.createObjectURL(materialData.heroImage)} 
+                              alt="置顶大图预览" 
+                              className="w-full h-20 mx-auto object-cover rounded-lg border"
+                            />
+                            <div className="text-sm text-green-600">✓ {materialData.heroImage.name}</div>
+                            <button 
+                              onClick={() => setMaterialData(prev => ({ ...prev, heroImage: null }))}
+                              className="text-xs text-red-500 hover:text-red-700"
+                            >
+                              重新上传
+                            </button>
+                          </div>
                         ) : (
                           <>
                             <input
@@ -958,8 +992,21 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                           点击上传
                         </label>
                         {materialData.screenshots.length > 0 && (
-                          <div className="text-sm text-green-600 mt-1">
-                            ✓ 已选择 {materialData.screenshots.length} 张
+                          <div className="mt-2 space-y-1">
+                            <div className="text-sm text-green-600">✓ 已选择 {materialData.screenshots.length} 张</div>
+                            <div className="flex flex-wrap gap-1 justify-center mt-1">
+                              {materialData.screenshots.slice(0, 3).map((file, idx) => (
+                                <img 
+                                  key={idx}
+                                  src={URL.createObjectURL(file)} 
+                                  alt={`截图${idx + 1}`}
+                                  className="w-10 h-10 object-cover rounded border"
+                                />
+                              ))}
+                              {materialData.screenshots.length > 3 && (
+                                <span className="text-xs text-gray-500 self-center">+{materialData.screenshots.length - 3}张</span>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
