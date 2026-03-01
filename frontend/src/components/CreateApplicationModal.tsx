@@ -1,5 +1,71 @@
 import React, { useState } from 'react';
 
+// ==================== 版本选择器组件（带搜索） ====================
+interface VersionSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder: string;
+  error?: string;
+}
+
+const VersionSelect: React.FC<VersionSelectProps> = ({ value, onChange, options, placeholder, error }) => {
+  const [search, setSearch] = useState('');
+  
+  const filteredOptions = options.filter(v => 
+    v.toLowerCase().includes(search.toLowerCase())
+  );
+  
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder={value || placeholder}
+        className={`w-full border rounded-lg px-3 py-2 pr-8 ${
+          error ? 'border-red-500' : 'border-gray-300'
+        }`}
+        onFocus={(e) => {
+          e.target.select();
+        }}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => {
+            onChange('');
+            setSearch('');
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        >
+          ✕
+        </button>
+      )}
+      {search && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map(opt => (
+              <div
+                key={opt}
+                className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                onClick={() => {
+                  onChange(opt);
+                  setSearch(opt);
+                }}
+              >
+                {opt}
+              </div>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-gray-400 text-sm">无匹配版本</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ==================== 类型定义 ====================
 
 // 应用类型选项
@@ -281,11 +347,18 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* 遮罩层 */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
+        onClick={onClose}
+        style={{ animation: 'fadeIn 0.2s ease-out' }}
+      />
       
       {/* Modal主体 */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div 
+          className="relative bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
+          style={{ animation: 'slideUp 0.3s ease-out' }}
+        >
           {/* 头部 */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center">
             <h3 className="text-xl font-semibold text-white">
@@ -446,18 +519,13 @@ export const CreateApplicationModal: React.FC<CreateApplicationModalProps> = ({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       版本号 <span className="text-red-500">*</span>
                     </label>
-                    <select
+                    <VersionSelect
                       value={appData.versionCode}
-                      onChange={(e) => setAppData(prev => ({ ...prev, versionCode: e.target.value }))}
-                      className={`w-full border rounded-lg px-3 py-2 ${
-                        errors.versionCode ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    >
-                      <option value="">请选择版本号</option>
-                      {versionCodeOptions.map(v => (
-                        <option key={v} value={v}>{v}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setAppData(prev => ({ ...prev, versionCode: val }))}
+                      options={versionCodeOptions}
+                      placeholder="请选择版本号"
+                      error={errors.versionCode}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
