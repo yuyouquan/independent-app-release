@@ -391,3 +391,39 @@ export const mockAPKProcess: APKProcess = {
     { name: '灰度监控', status: 'pending' },
   ],
 };
+
+// 模拟历史操作记录
+export const mockOperationRecords = [
+  {
+    id: '1',
+    operateTime: '2026-03-01 10:00:00',
+    operator: '张三',
+    action: '提交通道发布申请',
+    nodeName: '通道发布申请',
+    detail: '提交了应用 WhatsApp 的通道发布申请',
+  },
+  {
+    id: '2',
+    operateTime: '2026-03-01 10:05:00',
+    operator: '李四',
+    action: '审核通过',
+    nodeName: '通道发布审核',
+    detail: '通道发布申请已通过审核',
+  },
+  {
+    id: '3',
+    operateTime: '2026-03-01 10:10:00',
+    operator: '张三',
+    action: '提交物料',
+    nodeName: '物料上传',
+    detail: '已上传应用物料信息',
+  },
+  {
+    id: '4',
+    operateTime: '2026-03-01 10:15:00',
+    operator: '王五',
+    action: '审核拒绝',
+    nodeName: '物料审核',
+    detail: '物料不符合要求，请重新上传',
+  },
+];

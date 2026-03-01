@@ -7,12 +7,14 @@ import {
   mockKanbanShuttleView, 
   mockKanbanProductView, 
   mockKanbanStatusView,
+  mockAPKProcess,
   shuttleOptions, 
   tosVersionOptions, 
   apkStatusOptions
 } from '../data/mockData';
 import { CreateApplicationModal } from '../components/CreateApplicationModal';
-import type { KanbanData } from '../types';
+import APKDetailPage from './APKDetailPage';
+import type { KanbanData, APKProcess } from '../types';
 
 // 状态颜色映射 (符合PRD)
 const statusColors = {
@@ -553,16 +555,60 @@ const KanbanSection: React.FC = () => {
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list');
+  const [selectedAPK, setSelectedAPK] = useState<APKProcess | null>(null);
+  const [searchApp, setSearchApp] = useState('');
 
   const handleViewDetail = (id: string) => {
     navigate(`/application/${id}`);
   };
 
   const handleNavigateToPipeline = (todoId: string, node: string) => {
-    // 跳转到对应的申请详情页面，并打开对应节点的操作Modal
-    // 这里的todoId对应的是application的id
     navigate(`/application/${todoId}?node=${encodeURIComponent(node)}`);
   };
+
+  const handleViewAPKDetail = (apk: APKProcess) => {
+    setSelectedAPK(apk);
+  };
+
+  const handleBackToList = () => {
+    setSelectedAPK(null);
+  };
+
+  // 模拟该流程单下的应用列表（实际应该从API获取）
+  const applicationApps: APKProcess[] = [
+    mockAPKProcess,
+    { ...mockAPKProcess, id: '2', appName: 'Telegram', packageName: 'org.telegram', versionCode: '22651', status: 'completed' as const, nodes: [
+      { name: '通道发布申请', status: 'completed' },
+      { name: '通道发布审核', status: 'completed' },
+      { name: '物料上传', status: 'completed' },
+      { name: '物料审核', status: 'completed' },
+      { name: '应用上架', status: 'completed' },
+      { name: '业务内测', status: 'completed' },
+      { name: '灰度监控', status: 'completed' },
+    ]},
+    { ...mockAPKProcess, id: '3', appName: 'Facebook', packageName: 'com.facebook', versionCode: '22651', status: 'failed' as const, nodes: [
+      { name: '通道发布申请', status: 'completed' },
+      { name: '通道发布审核', status: 'completed' },
+      { name: '物料上传', status: 'rejected', rejectReason: '物料不符合要求' },
+      { name: '物料审核', status: 'pending' },
+      { name: '应用上架', status: 'pending' },
+      { name: '业务内测', status: 'pending' },
+      { name: '灰度监控', status: 'pending' },
+    ]},
+  ];
+
+  // 过滤应用
+  const filteredApps = applicationApps.filter(app => 
+    searchApp === '' || 
+    app.appName.toLowerCase().includes(searchApp.toLowerCase()) ||
+    app.packageName.toLowerCase().includes(searchApp.toLowerCase())
+  );
+
+  // 如果选择了APK详情，显示APK详情页
+  if (selectedAPK) {
+    return <APKDetailPage apkProcess={selectedAPK} onBack={handleBackToList} />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -588,6 +634,158 @@ const HomePage: React.FC = () => {
 
       {/* 主要内容区域 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        
+        {/* 应用卡片列表视图 - 符合PRD */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">该流程单下的应用列表</h2>
+            <div className="flex items-center gap-4">
+              {/* 搜索框 */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="搜索应用名称/包名"
+                  className="border border-gray-300 rounded-lg px-4 py-2 pl-10 w-64"
+                  value={searchApp}
+                  onChange={(e) => setSearchApp(e.target.value)}
+                />
+                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              {/* 视图切换 */}
+              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 ${viewMode === 'list' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  列表
+                </button>
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`px-4 py-2 ${viewMode === 'cards' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  卡片
+                </button>
+              </div>
+              {/* 添加应用按钮 */}
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <span className="text-lg">+</span>
+                添加应用
+              </button>
+            </div>
+          </div>
+
+          {/* 卡片视图 */}
+          {viewMode === 'cards' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredApps.map((app) => (
+                <div 
+                  key={app.id}
+                  onClick={() => handleViewAPKDetail(app)}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">{app.appIcon}</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">{app.appName}</h3>
+                      <p className="text-sm text-gray-500 truncate">{app.packageName}</p>
+                      <p className="text-sm text-gray-400">{app.appType} · v{app.versionCode}</p>
+                    </div>
+                    <div className={`px-2 py-1 rounded text-xs font-medium ${
+                      app.status === 'completed' ? 'bg-green-100 text-green-700' :
+                      app.status === 'failed' ? 'bg-red-100 text-red-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>
+                      {app.status === 'completed' ? '已完成' : app.status === 'failed' ? '失败' : '进行中'}
+                    </div>
+                  </div>
+                  
+                  {/* 当前节点 */}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">当前节点</span>
+                      <span className="font-medium">{app.nodes[app.currentNode]?.name || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-2">
+                      <span className="text-gray-500">操作人</span>
+                      <span>{app.nodes[app.currentNode]?.operator || '-'}</span>
+                    </div>
+                    {app.nodes[app.currentNode]?.rejectReason && (
+                      <div className="mt-2 p-2 bg-red-50 rounded text-sm text-red-600">
+                        拒绝原因: {app.nodes[app.currentNode].rejectReason}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 列表视图 */}
+          {viewMode === 'list' && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">应用</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">包名</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">版本</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">当前节点</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作人</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">创建时间</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredApps.map((app) => (
+                    <tr 
+                      key={app.id} 
+                      onClick={() => handleViewAPKDetail(app)}
+                      className="hover:bg-gray-50 cursor-pointer"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{app.appIcon}</span>
+                          <span className="font-medium text-gray-900">{app.appName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{app.packageName}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{app.appType}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">v{app.versionCode}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{app.nodes[app.currentNode]?.name}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          app.status === 'completed' ? 'bg-green-100 text-green-700' :
+                          app.status === 'failed' ? 'bg-red-100 text-red-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>
+                          {app.status === 'completed' ? '已完成' : app.status === 'failed' ? '失败' : '进行中'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{app.nodes[app.currentNode]?.operator || '-'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">2026-03-01</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* 分页 */}
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-1 border rounded hover:bg-gray-50" disabled>上一页</button>
+              <span className="px-3 py-1 bg-blue-600 text-white rounded">1</span>
+              <button className="px-3 py-1 border rounded hover:bg-gray-50" disabled>下一页</button>
+            </div>
+          </div>
+        </div>
+        
         <ApplicationList 
           onViewDetail={handleViewDetail} 
           onOpenModal={() => setIsModalOpen(true)} 
