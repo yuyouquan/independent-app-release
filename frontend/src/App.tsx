@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Eye, ChevronDown, ArrowLeft, CheckCircle, XCircle, Clock, AlertCircle, FileText, Upload, X } from 'lucide-react';
 import { mockApplications, mockTodos, shuttleOptions, tosVersionOptions, apkStatusOptions, Application, APKItem, TodoItem, ProcessNode } from './data/mockData';
 
@@ -817,12 +817,14 @@ function ChannelApplyModal({
   isOpen, 
   onClose, 
   apk,
-  onSave 
+  onSave,
+  readOnly = false 
 }: { 
   isOpen: boolean; 
   onClose: () => void; 
   apk: APKItem;
   onSave: (data: any) => void;
+  readOnly?: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
@@ -1801,6 +1803,7 @@ function ApplicationDetailPage() {
   const app = mockApplications.find(a => a.id === id) || mockApplications[0];
   const [searchKeyword, setSearchKeyword] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [addModalSelected, setAddModalSelected] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
 
@@ -1966,22 +1969,47 @@ function ApplicationDetailPage() {
                 type="text"
                 placeholder="搜索可添加的应用..."
                 className="w-full px-4 py-2 border rounded-lg"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
               />
             </div>
             <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
-              {['WhatsApp', 'Facebook', 'YouTube', 'Twitter', 'Snapchat'].map(name => (
-                <div key={name} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              {['WhatsApp', 'Facebook', 'YouTube', 'Twitter', 'Snapchat', 'LinkedIn', 'Telegram'].filter(name => 
+                searchKeyword === '' || name.toLowerCase().includes(searchKeyword.toLowerCase())
+              ).map(name => (
+                <div 
+                  key={name} 
+                  onClick={() => setAddModalSelected(addModalSelected === name ? null : name)}
+                  className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer ${
+                    addModalSelected === name ? 'bg-blue-50 border-blue-500' : 'hover:bg-gray-50'
+                  }`}
+                >
                   <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">📱</div>
                   <div>
                     <div className="font-medium">{name}</div>
                     <div className="text-xs text-gray-500">com.example.{name.toLowerCase()}</div>
                   </div>
+                  {addModalSelected === name && (
+                    <CheckCircle className="w-5 h-5 text-blue-500 ml-auto" />
+                  )}
                 </div>
               ))}
             </div>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
-              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认添加</button>
+              <button onClick={() => { setShowAddModal(false); setAddModalSelected(null); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+              <button 
+                onClick={() => { 
+                  if (addModalSelected) {
+                    alert(`已添加: ${addModalSelected}`);
+                    setShowAddModal(false); 
+                    setAddModalSelected(null); 
+                  }
+                }} 
+                disabled={!addModalSelected}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认添加
+              </button>
             </div>
           </div>
         </div>
@@ -1993,10 +2021,23 @@ function ApplicationDetailPage() {
 // ==================== APK详情页 ====================
 function APKDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'pipeline' | 'history'>('pipeline');
   const [showNodeModal, setShowNodeModal] = useState(false);
   const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
+  
+  // 从URL参数获取节点名称，自动打开对应Modal
+  useEffect(() => {
+    const nodeName = searchParams.get('node');
+    if (nodeName) {
+      const nodeIndex = NODE_NAMES.findIndex(n => n === nodeName);
+      if (nodeIndex >= 0) {
+        setSelectedNodeIndex(nodeIndex);
+        setShowNodeModal(true);
+      }
+    }
+  }, [searchParams]);
   
   // 找到对应的APK
   let targetAPK: APKItem | undefined;
@@ -2106,8 +2147,16 @@ function APKDetailPage() {
                 {apk.nodes.map((node, idx) => (
                   <div key={idx} className="flex items-center flex-shrink-0">
                     <div 
-                      className="flex flex-col items-center cursor-pointer hover:opacity-80"
-                      onClick={() => handleNodeClick(idx)}
+                      className={`flex flex-col items-center ${
+                        node.status !== 'pending' 
+                          ? 'cursor-pointer hover:opacity-80' 
+                          : 'cursor-not-allowed opacity-50'
+                      }`}
+                      onClick={() => {
+                        if (node.status !== 'pending') {
+                          handleNodeClick(idx);
+                        }
+                      }}
                     >
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${nodeStatusColors[node.status]}`}>
                         {node.status === 'completed' ? <CheckCircle className="w-6 h-6" /> :
@@ -2166,7 +2215,7 @@ function APKDetailPage() {
       </div>
 
       {/* 节点Modal - 根据节点类型显示 */}
-      {showNodeModal && selectedNodeIndex === 0 && apk.nodes[0].status !== 'completed' && (
+      {showNodeModal && selectedNodeIndex === 0 && (
         <ChannelApplyModal 
           isOpen={showNodeModal} 
           onClose={() => setShowNodeModal(false)} 
