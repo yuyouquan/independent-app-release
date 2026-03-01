@@ -2212,7 +2212,7 @@ function APKDetailPage() {
       {/* 节点Modal - 应用上架/业务内测/灰度监控 (只读展示) */}
       {showNodeModal && selectedNodeIndex >= 4 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <div>
                 <h2 className="text-xl font-semibold">{NODE_NAMES[selectedNodeIndex]}</h2>
@@ -2222,18 +2222,120 @@ function APKDetailPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <div className="flex items-center gap-2 text-blue-700">
                   <AlertCircle className="w-5 h-5" />
                   <span>该节点数据来自第三方平台，仅供查看</span>
                 </div>
               </div>
-              <div className="text-center text-gray-500 py-8">
-                {selectedNodeIndex === 4 && '应用上架数据展示区'}
-                {selectedNodeIndex === 5 && '业务内测数据展示区'}
-                {selectedNodeIndex === 6 && '灰度监控数据展示区'}
-              </div>
+
+              {/* 应用上架 / 业务内测 数据展示 */}
+              {(selectedNodeIndex === 4 || selectedNodeIndex === 5) && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">状态</div>
+                      <div className="font-medium text-green-600">生效中</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">升级任务名称</div>
+                      <div className="font-medium">{apk.appName} - Google Play发布</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">应用包名</div>
+                      <div className="font-medium">{apk.packageName}</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">版本号</div>
+                      <div className="font-medium">v{apk.versionCode}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">发布国家</div>
+                      <div className="font-medium">印度, 印尼, 巴基斯坦</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">发布品牌</div>
+                      <div className="font-medium">Tecno, Infinix, itel</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">发布机型</div>
+                      <div className="font-medium">X6841, X6858, KO5</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">语言</div>
+                      <div className="font-medium">英语, 印尼语, 泰语</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">安卓版本</div>
+                      <div className="font-medium">Android 11-15</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">tOS版本</div>
+                      <div className="font-medium">tOS 15.2.0+</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">灰度量级</div>
+                      <div className="font-medium">1000/天</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">分类</div>
+                      <div className="font-medium">Social</div>
+                    </div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-xs text-gray-500">生效时间</div>
+                    <div className="font-medium">2026-03-01 12:00:00</div>
+                  </div>
+                </div>
+              )}
+
+              {/* 灰度监控数据展示 */}
+              {selectedNodeIndex === 6 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">任务名称</div>
+                      <div className="font-medium">{apk.appName} - 灰度发布</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">生效时间</div>
+                      <div className="font-medium">2026-03-01 12:00:00</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">灰度量级</div>
+                      <div className="font-medium">1000/天</div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded">
+                    <div className="text-xs text-gray-500 mb-2">现状/总计</div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500" style={{ width: '65%' }} />
+                      </div>
+                      <div className="font-medium">650 / 1000</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">状态</div>
+                      <div className="font-medium text-blue-600">进行中</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">创建时间</div>
+                      <div className="font-medium">2026-03-01 10:00:00</div>
+                    </div>
+                    <div className="p-3 bg-gray-50 rounded">
+                      <div className="text-xs text-gray-500">完成时间</div>
+                      <div className="font-medium text-gray-400">预计 2026-03-02</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
               <button onClick={() => setShowNodeModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-100">关闭</button>
