@@ -1630,6 +1630,34 @@ function HomePage() {
   const [showModal, setShowModal] = useState(false);
   const [kanbanView, setKanbanView] = useState<'shuttle' | 'product' | 'status'>('shuttle');
 
+  // 班车申请表单状态
+  const [shuttleForm, setShuttleForm] = useState({
+    shuttleName: '',
+    tosVersion: '',
+    apps: [] as string[],
+  });
+  const [showAppDropdown, setShowAppDropdown] = useState(false);
+  const [appSearchKeyword, setAppSearchKeyword] = useState('');
+
+  // 可选择的APP列表
+  const availableApps = ['Spotify', 'Telegram', 'Instagram', 'WhatsApp', 'Facebook', 'YouTube', 'Twitter', 'Snapchat', 'LinkedIn', 'TikTok'];
+  const filteredAvailableApps = availableApps.filter(app => 
+    !shuttleForm.apps.includes(app) && 
+    (appSearchKeyword === '' || app.toLowerCase().includes(appSearchKeyword.toLowerCase()))
+  );
+
+  const handleShuttleSubmit = () => {
+    if (!shuttleForm.shuttleName || !shuttleForm.tosVersion || shuttleForm.apps.length === 0) {
+      alert('请填写完整的申请信息');
+      return;
+    }
+    // 模拟提交成功
+    alert(`班车申请成功！\n班车名称: ${shuttleForm.shuttleName}\ntOS版本: ${shuttleForm.tosVersion}\n应用: ${shuttleForm.apps.join(', ')}`);
+    setShowModal(false);
+    setShuttleForm({ shuttleName: '', tosVersion: '', apps: [] });
+    setAppSearchKeyword('');
+  };
+
   // 看板数据 - 班车视角
   const shuttleKanban = [
     { shuttleName: '班车20260301', month: '2026年3月', products: ['Spotify', 'Telegram', 'Instagram'], count: 3 },
@@ -1918,11 +1946,92 @@ function HomePage() {
       {/* 申请Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
             <h3 className="text-lg font-semibold mb-4">申请独立三方应用发布流程</h3>
-            <p className="text-gray-500">申请功能开发中...</p>
-            <div className="mt-4 flex justify-end">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">关闭</button>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  班车名称 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="例如: 班车20260302"
+                  className="w-full border rounded-lg px-4 py-2"
+                  value={shuttleForm.shuttleName}
+                  onChange={(e) => setShuttleForm({...shuttleForm, shuttleName: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  tOS版本 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  className="w-full border rounded-lg px-4 py-2"
+                  value={shuttleForm.tosVersion}
+                  onChange={(e) => setShuttleForm({...shuttleForm, tosVersion: e.target.value})}
+                >
+                  <option value="">请选择tOS版本</option>
+                  {tosVersionOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  选择应用 <span className="text-red-500">*</span> (至少选择1个)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="搜索应用..."
+                    className="w-full border rounded-lg px-4 py-2"
+                    value={appSearchKeyword}
+                    onChange={(e) => setAppSearchKeyword(e.target.value)}
+                    onFocus={() => setShowAppDropdown(true)}
+                  />
+                  {showAppDropdown && filteredAvailableApps.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                      {filteredAvailableApps.map(app => (
+                        <button
+                          key={app}
+                          onClick={() => {
+                            setShuttleForm({...shuttleForm, apps: [...shuttleForm.apps, app]});
+                            setShowAppDropdown(false);
+                            setAppSearchKeyword('');
+                          }}
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                        >
+                          {app}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {/* 已选应用标签 */}
+                {shuttleForm.apps.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {shuttleForm.apps.map(app => (
+                      <span key={app} className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1">
+                        {app}
+                        <button 
+                          onClick={() => setShuttleForm({...shuttleForm, apps: shuttleForm.apps.filter(a => a !== app)})}
+                          className="hover:text-blue-900"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={() => { setShowModal(false); setShuttleForm({ shuttleName: '', tosVersion: '', apps: [] }); }} className="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+              <button onClick={handleShuttleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">提交申请</button>
             </div>
           </div>
         </div>
