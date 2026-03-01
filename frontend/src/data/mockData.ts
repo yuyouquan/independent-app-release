@@ -1,12 +1,15 @@
 // 独立三方应用发布系统 - 模拟数据
-export interface Application {
-  id: string;
-  shuttleName: string;      // 班车名称: 班车20260301
-  tosVersion: string;       // tOS版本: tOS 16.1.0
-  status: 'success' | 'failed' | 'processing';  // APK状态
-  applicant: string;        // 申请人
-  applyTime: string;        // 申请时间
-  apps: APKItem[];          // 流程单下的应用列表
+
+// 节点状态类型
+export type NodeStatus = 'completed' | 'processing' | 'rejected' | 'pending';
+
+// 流程节点
+export interface ProcessNode {
+  name: string;
+  status: NodeStatus;
+  operator?: string;
+  operatorTime?: string;
+  rejectReason?: string;
 }
 
 export interface APKItem {
@@ -23,12 +26,14 @@ export interface APKItem {
   createTime: string;
 }
 
-export interface ProcessNode {
-  name: string;
-  status: 'completed' | 'processing' | 'rejected' | 'pending';
-  operator?: string;
-  operatorTime?: string;
-  rejectReason?: string;
+export interface Application {
+  id: string;
+  shuttleName: string;
+  tosVersion: string;
+  status: 'success' | 'failed' | 'processing';
+  applicant: string;
+  applyTime: string;
+  apps: APKItem[];
 }
 
 // 模拟申请列表数据
@@ -80,6 +85,27 @@ export const mockApplications: Application[] = [
           { name: '业务内测', status: 'completed', operator: '赵六', operatorTime: '2026-03-01 15:00:00' },
           { name: '灰度监控', status: 'completed', operator: '赵六', operatorTime: '2026-03-01 16:00:00' },
         ]
+      },
+      {
+        id: '3',
+        appIcon: '📸',
+        appName: 'Instagram',
+        packageName: 'com.instagram.android',
+        appType: 'Social',
+        versionCode: '22651',
+        status: 'failed',
+        operator: '张三',
+        createTime: '2026-03-01 10:00:00',
+        rejectReason: '物料不符合要求',
+        nodes: [
+          { name: '通道发布申请', status: 'completed', operator: '张三', operatorTime: '2026-03-01 10:00:00' },
+          { name: '通道发布审核', status: 'completed', operator: '李四', operatorTime: '2026-03-01 11:00:00' },
+          { name: '物料上传', status: 'rejected', operator: '张三', operatorTime: '2026-03-01 12:00:00', rejectReason: '物料不符合要求' },
+          { name: '物料审核', status: 'pending' },
+          { name: '应用上架', status: 'pending' },
+          { name: '业务内测', status: 'pending' },
+          { name: '灰度监控', status: 'pending' },
+        ]
       }
     ]
   },
@@ -100,6 +126,40 @@ export const mockApplications: Application[] = [
     applicant: '王五',
     applyTime: '2026-02-25 14:00:00',
     apps: []
+  }
+];
+
+// 待办事项数据
+export interface TodoItem {
+  id: string;
+  appId: string;
+  shuttleName: string;
+  appName: string;
+  currentNode: string;
+  nodeStatus: 'processing' | 'rejected';
+  operator: string;
+  rejectReason?: string;
+}
+
+export const mockTodos: TodoItem[] = [
+  {
+    id: '1',
+    appId: '1',
+    shuttleName: '班车20260301',
+    appName: 'Spotify',
+    currentNode: '通道发布审核',
+    nodeStatus: 'processing',
+    operator: '李四',
+  },
+  {
+    id: '2',
+    appId: '3',
+    shuttleName: '班车20260301',
+    appName: 'Instagram',
+    currentNode: '物料上传',
+    nodeStatus: 'rejected',
+    operator: '张三',
+    rejectReason: '物料不符合要求',
   }
 ];
 
