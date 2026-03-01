@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockApplications, mockTodos, mockKanbanData, mockKanbanShuttle, mockKanbanProduct, mockKanbanStatus, shuttleOptions, tosVersionOptions, apkStatusOptions } from '../data/mockData';
+import { 
+  mockApplications, 
+  mockTodos, 
+  mockKanbanData, 
+  mockKanbanShuttleView, 
+  mockKanbanProductView, 
+  mockKanbanStatusView,
+  shuttleOptions, 
+  tosVersionOptions, 
+  apkStatusOptions
+} from '../data/mockData';
 import { CreateApplicationModal } from '../components/CreateApplicationModal';
 import type { KanbanData } from '../types';
 
-// 状态颜色映射
+// 状态颜色映射 (符合PRD)
 const statusColors = {
   success: 'bg-green-100 text-green-800',
   rejected: 'bg-red-100 text-red-800',
@@ -23,7 +33,26 @@ const statusLabels = {
   total: '总数',
 };
 
-// 申请列表组件
+// 节点状态颜色
+const nodeStatusColors = {
+  '待处理': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  '进行中': 'bg-blue-100 text-blue-800 border-blue-200',
+  '已完成': 'bg-green-100 text-green-800 border-green-200',
+  '已拒绝': 'bg-red-100 text-red-800 border-red-200',
+};
+
+// 节点图标映射
+const nodeIcons: Record<string, string> = {
+  '通道发布申请': '📝',
+  '通道发布审核': '✅',
+  '物料上传': '📤',
+  '物料审核': '🔍',
+  '应用上架': '📱',
+  '业务内测': '🧪',
+  '灰度监控': '📊',
+};
+
+// ==================== 申请列表组件 ====================
 const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModal: () => void }> = ({ onViewDetail, onOpenModal }) => {
   const [searchShuttle, setSearchShuttle] = useState('');
   const [searchTos, setSearchTos] = useState('');
@@ -32,7 +61,7 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
 
   const filteredApps = mockApplications.filter((app) => {
-    const appDate = new Date(app.applyTime);
+    const appDate = new Date(app.applyTime.replace(/[:\s]/g, '-'));
     const startDate = dateRange.start ? new Date(dateRange.start) : null;
     const endDate = dateRange.end ? new Date(dateRange.end) : null;
     
@@ -59,8 +88,9 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
         </button>
       </div>
 
-      {/* 筛选条件 */}
+      {/* 筛选条件 - 符合PRD字段 */}
       <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+        {/* 班车名称筛选 */}
         <select
           className="border border-gray-300 rounded-lg px-3 py-2"
           value={searchShuttle}
@@ -71,6 +101,8 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
+        
+        {/* tOS版本筛选 */}
         <select
           className="border border-gray-300 rounded-lg px-3 py-2"
           value={searchTos}
@@ -81,6 +113,8 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
             <option key={opt} value={opt}>{opt}</option>
           ))}
         </select>
+        
+        {/* APK状态筛选 */}
         <select
           className="border border-gray-300 rounded-lg px-3 py-2"
           value={searchStatus}
@@ -91,6 +125,8 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
+        
+        {/* 申请人筛选 */}
         <input
           type="text"
           placeholder="申请人"
@@ -98,6 +134,8 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
           value={searchApplicant}
           onChange={(e) => setSearchApplicant(e.target.value)}
         />
+
+        {/* 申请时间筛选 - 日期范围 */}
         <input
           type="date"
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
@@ -112,7 +150,10 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
           onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
           placeholder="结束日期"
         />
-        <div className="flex gap-2 items-center">
+      </div>
+
+      {/* 快捷筛选按钮 */}
+      <div className="flex gap-2 mb-4">
           <button
             onClick={() => {
               const today = new Date();
@@ -147,10 +188,9 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
           >
             清除
           </button>
-        </div>
       </div>
 
-      {/* 表格 */}
+      {/* 表格 - 符合PRD字段 */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
@@ -169,12 +209,20 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{app.shuttleName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.tosVersion}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[app.apkStatus]}`}>
-                    {app.apkStatus === 'success' && '✅ '}
-                    {app.apkStatus === 'rejected' && '❌ '}
-                    {app.apkStatus === 'processing' && '🔵 '}
-                    {statusLabels[app.apkStatus]}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[app.apkStatus]}`}>
+                      {app.apkStatus === 'success' && '✅ '}
+                      {app.apkStatus === 'rejected' && '❌ '}
+                      {app.apkStatus === 'processing' && '🔵 '}
+                      {statusLabels[app.apkStatus]}
+                    </span>
+                    {/* 显示详细统计 */}
+                    {app.appCount && (
+                      <span className="text-xs text-gray-400">
+                        (成功{app.completedCount}/进行中{app.processingCount}/拒绝{app.rejectedCount})
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.applicant}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{app.applyTime}</td>
@@ -195,41 +243,22 @@ const ApplicationList: React.FC<{ onViewDetail: (id: string) => void; onOpenModa
   );
 };
 
-// 待办组件 - 增强版
+// ==================== 待办组件 - 符合PRD ====================
 const TodoSection: React.FC<{ onNavigateToPipeline: (appId: string, node: string) => void }> = ({ onNavigateToPipeline }) => {
-  const [filter, setFilter] = useState<'all' | 'pending' | 'processing'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'rejected'>('all');
   const [selectedTodo, setSelectedTodo] = useState<string | null>(null);
 
   const filteredTodos = mockTodos.filter(todo => {
     if (filter === 'all') return true;
     if (filter === 'pending') return todo.nodeStatus === '待处理';
     if (filter === 'processing') return todo.nodeStatus === '进行中';
+    if (filter === 'rejected') return todo.nodeStatus === '已拒绝';
     return true;
   });
 
   const pendingCount = mockTodos.filter(t => t.nodeStatus === '待处理').length;
   const processingCount = mockTodos.filter(t => t.nodeStatus === '进行中').length;
-
-  // 节点状态颜色映射
-  const getNodeStatusColor = (status: string) => {
-    if (status === '待处理') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (status === '进行中') return 'bg-blue-100 text-blue-800 border-blue-200';
-    return 'bg-gray-100 text-gray-800';
-  };
-
-  // 节点图标映射
-  const getNodeIcon = (node: string) => {
-    const icons: Record<string, string> = {
-      '通道发布申请': '📝',
-      '通道发布审核': '✅',
-      '物料上传': '📤',
-      '物料审核': '🔍',
-      '应用上架': '📱',
-      '业务内测': '🧪',
-      '灰度监控': '📊',
-    };
-    return icons[node] || '⚪';
-  };
+  const rejectedCount = mockTodos.filter(t => t.nodeStatus === '已拒绝').length;
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -260,11 +289,19 @@ const TodoSection: React.FC<{ onNavigateToPipeline: (appId: string, node: string
           >
             进行中 ({processingCount})
           </button>
+          <button
+            onClick={() => setFilter('rejected')}
+            className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+              filter === 'rejected' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            已拒绝 ({rejectedCount})
+          </button>
         </div>
       </div>
 
-      {/* 统计摘要 */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
+      {/* 统计摘要 - 符合PRD */}
+      <div className="grid grid-cols-4 gap-3 mb-4">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-yellow-600">{pendingCount}</div>
           <div className="text-xs text-yellow-700">待处理</div>
@@ -273,12 +310,17 @@ const TodoSection: React.FC<{ onNavigateToPipeline: (appId: string, node: string
           <div className="text-2xl font-bold text-blue-600">{processingCount}</div>
           <div className="text-xs text-blue-700">进行中</div>
         </div>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+          <div className="text-2xl font-bold text-red-600">{rejectedCount}</div>
+          <div className="text-xs text-red-700">已拒绝</div>
+        </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
           <div className="text-2xl font-bold text-green-600">{mockTodos.length}</div>
           <div className="text-xs text-green-700">总计</div>
         </div>
       </div>
 
+      {/* 待办卡片列表 - 符合PRD格式 */}
       <div className="space-y-3 max-h-96 overflow-y-auto">
         {filteredTodos.length > 0 ? (
           filteredTodos.map((todo) => (
@@ -293,43 +335,61 @@ const TodoSection: React.FC<{ onNavigateToPipeline: (appId: string, node: string
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
+                  {/* 班车名称 + 应用名称 - 符合PRD */}
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">{getNodeIcon(todo.node)}</span>
+                    <span className="text-lg">{nodeIcons[todo.node] || '⚪'}</span>
                     <span className="text-sm text-gray-500">{todo.shuttleName}</span>
                     <span className="text-gray-300">|</span>
                     <span className="font-medium text-gray-900">{todo.appName}</span>
+                    {todo.packageName && (
+                      <span className="text-xs text-gray-400">({todo.packageName})</span>
+                    )}
                   </div>
+                  
+                  {/* 流程节点 + 状态 - 符合PRD */}
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-gray-600">节点:</span>
                     <span className="text-blue-600 font-medium">{todo.node}</span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getNodeStatusColor(todo.nodeStatus)}`}>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium border ${nodeStatusColors[todo.nodeStatus]}`}>
                       {todo.nodeStatus}
                     </span>
                     <span className="text-gray-400">|</span>
                     <span className="text-gray-500 text-xs">处理人: {todo.handler}</span>
+                    {todo.createTime && (
+                      <>
+                        <span className="text-gray-400">|</span>
+                        <span className="text-gray-500 text-xs">创建时间: {todo.createTime}</span>
+                      </>
+                    )}
                   </div>
+                  
+                  {/* 拒绝原因 - 符合PRD (当被后续节点拒绝回退时显示) */}
                   {todo.rejectReason && (
-                    <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+                    <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
                       ⚠️ 拒绝原因: {todo.rejectReason}
                     </div>
                   )}
+                  
                   {/* 展开详情 */}
                   {selectedTodo === todo.id && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
                       <div className="text-xs text-gray-500 space-y-1">
                         <div>班车: {todo.shuttleName}</div>
                         <div>应用: {todo.appName}</div>
+                        {todo.packageName && <div>包名: {todo.packageName}</div>}
                         <div>当前节点: {todo.node}</div>
                         <div>处理人: {todo.handler}</div>
+                        {todo.createTime && <div>创建时间: {todo.createTime}</div>}
                       </div>
                     </div>
                   )}
                 </div>
+                
+                {/* 去处理按钮 - 符合PRD */}
                 <button 
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors ml-3"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // 跳转到对应的应用详情页面
                     onNavigateToPipeline(todo.id, todo.node);
                   }}
                 >
@@ -348,7 +408,7 @@ const TodoSection: React.FC<{ onNavigateToPipeline: (appId: string, node: string
   );
 };
 
-// 看板组件 - 多视角支持
+// ==================== 看板组件 - 符合PRD ====================
 const KanbanSection: React.FC = () => {
   const [view, setView] = useState<KanbanView>('overview');
   const data = mockKanbanData as KanbanData;
@@ -404,59 +464,32 @@ const KanbanSection: React.FC = () => {
         </div>
       )}
 
-      {/* 班车视角 */}
+      {/* 班车视角 - 符合PRD格式 */}
       {view === 'shuttle' && (
         <div className="space-y-3">
-          <div className="grid grid-cols-4 gap-2 text-xs font-medium text-gray-500 uppercase bg-gray-50 p-2 rounded">
-            <div>班车名称</div>
-            <div>tOS版本</div>
-            <div>应用数量</div>
-            <div>进度</div>
-          </div>
-          {mockKanbanShuttle.map((shuttle, idx) => (
-            <div key={idx} className="grid grid-cols-4 gap-2 text-sm p-3 border rounded-lg hover:shadow-sm transition-shadow">
-              <div className="font-medium text-gray-900">{shuttle.name}</div>
-              <div className="text-gray-600">{shuttle.tosVersion}</div>
-              <div className="text-gray-600">{shuttle.appCount}个</div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-500 rounded-full" 
-                    style={{ width: `${(shuttle.completedCount / shuttle.appCount) * 100}%` }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500">
-                  {shuttle.completedCount}/{shuttle.appCount}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 产品视角 */}
-      {view === 'product' && (
-        <div className="space-y-3">
           <div className="grid grid-cols-5 gap-2 text-xs font-medium text-gray-500 uppercase bg-gray-50 p-2 rounded">
-            <div>产品名称</div>
-            <div>包名</div>
-            <div>发布次数</div>
-            <div>最新版本</div>
+            <div>班车名称</div>
+            <div>月份</div>
+            <div>覆盖产品</div>
+            <div>产品数量</div>
             <div>状态</div>
           </div>
-          {mockKanbanProduct.map((product, idx) => (
+          {mockKanbanShuttleView.map((shuttle, idx) => (
             <div key={idx} className="grid grid-cols-5 gap-2 text-sm p-3 border rounded-lg hover:shadow-sm transition-shadow">
-              <div className="font-medium text-gray-900">{product.name}</div>
-              <div className="text-gray-600 text-xs truncate">{product.packageName}</div>
-              <div className="text-gray-600">{product.releaseCount}次</div>
-              <div className="text-gray-600">{product.latestVersion}</div>
+              <div className="font-medium text-gray-900">{shuttle.name}</div>
+              <div className="text-gray-600">{shuttle.month}</div>
+              <div className="text-gray-600 truncate">
+                {shuttle.products.slice(0, 3).join('、')}
+                {shuttle.products.length > 3 && `等${shuttle.products.length}个`}
+              </div>
+              <div className="text-gray-600">{shuttle.productCount}个</div>
               <div>
                 <span className={`px-2 py-0.5 rounded text-xs ${
-                  product.status === 'active' 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-gray-100 text-gray-600'
+                  shuttle.status === '进行中' 
+                    ? 'bg-blue-100 text-blue-700' 
+                    : 'bg-green-100 text-green-700'
                 }`}>
-                  {product.status === 'active' ? '活跃' : '闲置'}
+                  {shuttle.status}
                 </span>
               </div>
             </div>
@@ -464,23 +497,51 @@ const KanbanSection: React.FC = () => {
         </div>
       )}
 
-      {/* 状态视角 */}
-      {view === 'status' && (
+      {/* 产品视角 - 符合PRD格式 */}
+      {view === 'product' && (
         <div className="space-y-3">
-          <div className="grid grid-cols-7 gap-2 text-xs font-medium text-gray-500 uppercase bg-gray-50 p-2 rounded">
-            {mockKanbanStatus.map((s, idx) => (
-              <div key={idx} className="text-center truncate">{s.name}</div>
-            ))}
+          <div className="grid grid-cols-4 gap-2 text-xs font-medium text-gray-500 uppercase bg-gray-50 p-2 rounded">
+            <div>产品名称</div>
+            <div>发布次数</div>
+            <div>最近发布版本</div>
+            <div>状态</div>
           </div>
-          <div className="grid grid-cols-7 gap-2">
-            {mockKanbanStatus.map((s, idx) => (
-              <div key={idx} className="text-center p-3 border rounded-lg">
-                <div className={`${s.color} text-white rounded-lg py-1 px-2 mb-2 text-xs truncate`}>
-                  {s.name}
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{s.count}</div>
+          {mockKanbanProductView.map((product, idx) => (
+            <div key={idx} className="grid grid-cols-4 gap-2 text-sm p-3 border rounded-lg hover:shadow-sm transition-shadow">
+              <div className="font-medium text-gray-900">{product.name}</div>
+              <div className="text-gray-600">{product.releaseCount}次</div>
+              <div className="text-gray-600">
+                {product.releases[0]?.version || '-'}
+                {product.releases.length > 1 && (
+                  <span className="text-xs text-gray-400 ml-1">(+{product.releases.length - 1})</span>
+                )}
               </div>
-            ))}
+              <div>
+                <span className="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">
+                  {product.releases[0]?.status || '-'}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 状态视角 - 符合PRD格式 */}
+      {view === 'status' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+              <div className="text-3xl font-bold text-blue-600">{mockKanbanStatusView.进行中}</div>
+              <div className="text-sm text-blue-700">进行中产品</div>
+            </div>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <div className="text-3xl font-bold text-green-600">{mockKanbanStatusView.已完成}</div>
+              <div className="text-sm text-green-700">已完成产品</div>
+            </div>
+          </div>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-center">
+            <div className="text-3xl font-bold text-purple-600">{mockKanbanStatusView.升级任务数}</div>
+            <div className="text-sm text-purple-700">升级任务总数</div>
           </div>
         </div>
       )}
@@ -488,7 +549,7 @@ const KanbanSection: React.FC = () => {
   );
 };
 
-// 首页主组件
+// ==================== 首页主组件 ====================
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -498,28 +559,53 @@ const HomePage: React.FC = () => {
   };
 
   const handleNavigateToPipeline = (todoId: string, node: string) => {
-    // 根据待办项跳转到对应的处理页面
-    console.log('跳转到处理:', todoId, node);
-    // 暂时跳转到申请详情页
-    navigate(`/application/${todoId}`);
-  };
-
-  const handleCreateApplication = (data: any) => {
-    console.log('提交申请数据:', data);
-    alert('申请提交成功！请在待办中查看审核状态。');
+    // 跳转到对应的申请详情页面，并打开对应节点的操作Modal
+    // 这里的todoId对应的是application的id
+    navigate(`/application/${todoId}?node=${encodeURIComponent(node)}`);
   };
 
   return (
-    <div className="space-y-6">
-      <ApplicationList onViewDetail={handleViewDetail} onOpenModal={() => setIsModalOpen(true)} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="min-h-screen bg-gray-100">
+      {/* 顶部导航 */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-gray-900">独立三方应用发布系统</h1>
+              <span className="ml-2 text-xs text-gray-500">v2.4</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="text-gray-500 hover:text-gray-700">
+                <span className="text-sm">通知</span>
+              </button>
+              <button className="text-gray-500 hover:text-gray-700">
+                <span className="text-sm">设置</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 主要内容区域 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <ApplicationList 
+          onViewDetail={handleViewDetail} 
+          onOpenModal={() => setIsModalOpen(true)} 
+        />
+        
         <TodoSection onNavigateToPipeline={handleNavigateToPipeline} />
+        
         <KanbanSection />
       </div>
-      <CreateApplicationModal
-        isOpen={isModalOpen}
+
+      {/* 创建申请Modal */}
+      <CreateApplicationModal 
+        isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateApplication}
+        onSubmit={(data) => {
+          setIsModalOpen(false);
+          console.log('提交申请:', data);
+        }}
       />
     </div>
   );
