@@ -67,14 +67,63 @@ interface NodeModalProps {
 }
 
 const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onClose, onSave, onApprove, onReject }) => {
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>({
+    versionCode: apkProcess.versionCode || '',
+    appCategory: 'Social',
+    systemApp: 'no',
+    filterIndia: 'no',
+    countryType: 'all',
+    brandType: 'all',
+    deviceType: 'all',
+    betaDeviceType: 'all',
+    androidVersionType: 'all',
+    tosVersionType: 'all',
+    isPAUpdate: 'yes',
+    grayScaleLevel: 1000,
+    effectiveTime: '',
+    // 物料字段
+    materials: {
+      en: {
+        appName: '',
+        shortDescription: '',
+        productDetail: '',
+        updateDescription: '',
+        keywords: [],
+        isGP上架: false,
+        gpLink: '',
+      }
+    }
+  });
   const [rejectReason, setRejectReason] = useState('');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
+  const [reviewResult, setReviewResult] = useState<'pass' | 'reject' | ''>('');
+  const [operatorReviewResult, setOperatorReviewResult] = useState<'pass' | 'reject' | ''>('');
+  const [bossReviewResult, setBossReviewResult] = useState<'pass' | 'reject' | ''>('');
   
   const isViewOnly = node.status === 'completed';
   const isRejected = node.status === 'rejected';
+  const isProcessing = node.status === 'processing';
+
+  // 更新表单字段
+  const updateFormField = (field: string, value: any) => {
+    setFormData((prev: typeof formData) => ({ ...prev, [field]: value }));
+  };
+
+  // 更新物料字段
+  const updateMaterialField = (field: string, value: any) => {
+    setFormData((prev: typeof formData) => ({
+      ...prev,
+      materials: {
+        ...prev.materials,
+        [activeLang]: {
+          ...prev.materials[activeLang],
+          [field]: value
+        }
+      }
+    }));
+  };
 
   // 表单验证
   const validateForm = (): boolean => {
@@ -88,11 +137,32 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         if (!formData.appCategory) errors.push('请选择应用分类');
       } else if (activeTab === 'material') {
         // 物料验证
-        if (!formData.appName) errors.push('请输入应用名称');
-        if (!formData.shortDescription) errors.push('请输入一句话描述');
-        if (!formData.productDetail) errors.push('请输入产品详情');
-        if (!formData.keywords || formData.keywords.length === 0) errors.push('请输入关键词');
+        const material = formData.materials?.[activeLang] || {};
+        if (!material.appName) errors.push('请输入应用名称');
+        if (!material.shortDescription) errors.push('请输入一句话描述');
+        if (!material.productDetail) errors.push('请输入产品详情');
+        if (!material.keywords || material.keywords.length === 0) errors.push('请输入关键词');
       }
+    }
+    
+    setValidationErrors(errors);
+    return errors.length === 0;
+  };
+
+  // 审核验证
+  const validateReview = (): boolean => {
+    const errors: string[] = [];
+    
+    if (nodeIndex === 1) {
+      // 通道发布审核
+      if (!reviewResult) errors.push('请选择审核结果');
+      if (reviewResult === 'reject' && !rejectReason.trim()) errors.push('请填写拒绝原因');
+    } else if (nodeIndex === 3) {
+      // 物料审核
+      if (!operatorReviewResult) errors.push('请选择运营审核结果');
+      if (operatorReviewResult === 'reject' && !formData.operatorRejectReason?.trim()) errors.push('请填写运营拒绝原因');
+      if (operatorReviewResult === 'pass' && !bossReviewResult) errors.push('请选择老板审核结果');
+      if (bossReviewResult === 'reject' && !formData.bossRejectReason?.trim()) errors.push('请填写老板拒绝原因');
     }
     
     setValidationErrors(errors);
@@ -103,9 +173,24 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
   const handleConfirm = () => {
     if (!validateForm()) return;
     
-    // 扭转到下一节点逻辑
     console.log('保存数据并扭转到下一节点:', formData);
     onSave({ ...formData, nextNode: nodeIndex + 1 });
+  };
+
+  // 审核通过
+  const handleApprove = () => {
+    if (!validateReview()) return;
+    
+    console.log('审核通过');
+    onApprove?.();
+  };
+
+  // 审核拒绝
+  const handleReject = () => {
+    if (!validateReview()) return;
+    
+    console.log('审核拒绝:', rejectReason);
+    onReject?.(rejectReason);
   };
 
   // 渲染通道发布申请/物料上传表单
@@ -131,8 +216,13 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
             <input type="text" value={apkProcess.appType || 'Social'} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">应用版本号</label>
-            <select className="w-full border rounded px-3 py-2" disabled={isViewOnly}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">应用版本号 <span className="text-red-500">*</span></label>
+            <select 
+              className="w-full border rounded px-3 py-2" 
+              disabled={isViewOnly}
+              value={formData.versionCode}
+              onChange={(e) => updateFormField('versionCode', e.target.value)}
+            >
               <option value="">选择版本</option>
               <option value="22651">v22651 - 2.26.1.15</option>
               <option value="22650">v22650 - 2.26.1.14</option>
@@ -150,8 +240,13 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">应用分类</label>
-            <select className="w-full border rounded px-3 py-2" disabled={isViewOnly}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">应用分类 <span className="text-red-500">*</span></label>
+            <select 
+              className="w-full border rounded px-3 py-2" 
+              disabled={isViewOnly}
+              value={formData.appCategory}
+              onChange={(e) => updateFormField('appCategory', e.target.value)}
+            >
               {appCategoryOptions.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
@@ -160,22 +255,50 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">系统应用</label>
             <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input type="radio" name="systemApp" value="yes" disabled={isViewOnly} /> 是
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="systemApp" 
+                  value="yes" 
+                  checked={formData.systemApp === 'yes'}
+                  onChange={(e) => updateFormField('systemApp', e.target.value)}
+                  disabled={isViewOnly} 
+                /> 是
               </label>
-              <label className="flex items-center gap-2">
-                <input type="radio" name="systemApp" value="no" defaultChecked disabled={isViewOnly} /> 否
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="systemApp" 
+                  value="no" 
+                  checked={formData.systemApp === 'no'}
+                  onChange={(e) => updateFormField('systemApp', e.target.value)}
+                  disabled={isViewOnly} 
+                /> 否
               </label>
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">是否需要过滤印度</label>
             <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <input type="radio" name="filterIndia" value="yes" disabled={isViewOnly} /> 是
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="filterIndia" 
+                  value="yes" 
+                  checked={formData.filterIndia === 'yes'}
+                  onChange={(e) => updateFormField('filterIndia', e.target.value)}
+                  disabled={isViewOnly} 
+                /> 是
               </label>
-              <label className="flex items-center gap-2">
-                <input type="radio" name="filterIndia" value="no" defaultChecked disabled={isViewOnly} /> 否
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="filterIndia" 
+                  value="no" 
+                  checked={formData.filterIndia === 'no'}
+                  onChange={(e) => updateFormField('filterIndia', e.target.value)}
+                  disabled={isViewOnly} 
+                /> 否
               </label>
             </div>
           </div>
@@ -185,7 +308,12 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">发布国家</label>
-            <select className="w-full border rounded px-3 py-2 mb-2" disabled={isViewOnly}>
+            <select 
+              className="w-full border rounded px-3 py-2 mb-2" 
+              disabled={isViewOnly}
+              value={formData.countryType}
+              onChange={(e) => updateFormField('countryType', e.target.value)}
+            >
               <option value="all">全部</option>
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
@@ -193,7 +321,12 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
-            <select className="w-full border rounded px-3 py-2 mb-2" disabled={isViewOnly}>
+            <select 
+              className="w-full border rounded px-3 py-2 mb-2" 
+              disabled={isViewOnly}
+              value={formData.brandType}
+              onChange={(e) => updateFormField('brandType', e.target.value)}
+            >
               <option value="all">全部</option>
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
@@ -201,7 +334,12 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">发布机型</label>
-            <select className="w-full border rounded px-3 py-2 mb-2" disabled={isViewOnly}>
+            <select 
+              className="w-full border rounded px-3 py-2 mb-2" 
+              disabled={isViewOnly}
+              value={formData.deviceType}
+              onChange={(e) => updateFormField('deviceType', e.target.value)}
+            >
               <option value="all">全部</option>
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
@@ -209,7 +347,12 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">内测机型</label>
-            <select className="w-full border rounded px-3 py-2 mb-2" disabled={isViewOnly}>
+            <select 
+              className="w-full border rounded px-3 py-2 mb-2" 
+              disabled={isViewOnly}
+              value={formData.betaDeviceType}
+              onChange={(e) => updateFormField('betaDeviceType', e.target.value)}
+            >
               <option value="all">全部</option>
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
@@ -217,7 +360,12 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">适用安卓版本</label>
-            <select className="w-full border rounded px-3 py-2 mb-2" disabled={isViewOnly}>
+            <select 
+              className="w-full border rounded px-3 py-2 mb-2" 
+              disabled={isViewOnly}
+              value={formData.androidVersionType}
+              onChange={(e) => updateFormField('androidVersionType', e.target.value)}
+            >
               <option value="all">全部</option>
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
@@ -225,7 +373,12 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">适用tOS版本</label>
-            <select className="w-full border rounded px-3 py-2 mb-2" disabled={isViewOnly}>
+            <select 
+              className="w-full border rounded px-3 py-2 mb-2" 
+              disabled={isViewOnly}
+              value={formData.tosVersionType}
+              onChange={(e) => updateFormField('tosVersionType', e.target.value)}
+            >
               <option value="all">全部</option>
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
@@ -241,28 +394,60 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           PA应用更新
         </h4>
         <div className="flex gap-4 mb-4">
-          <label className="flex items-center gap-2">
-            <input type="radio" name="isPAUpdate" value="yes" defaultChecked disabled={isViewOnly} /> 是
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="isPAUpdate" 
+              value="yes" 
+              checked={formData.isPAUpdate === 'yes'}
+              onChange={(e) => updateFormField('isPAUpdate', e.target.value)}
+              disabled={isViewOnly} 
+            /> 是
           </label>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="isPAUpdate" value="no" disabled={isViewOnly} /> 否
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="radio" 
+              name="isPAUpdate" 
+              value="no" 
+              checked={formData.isPAUpdate === 'no'}
+              onChange={(e) => updateFormField('isPAUpdate', e.target.value)}
+              disabled={isViewOnly} 
+            /> 否
           </label>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">灰度量级（x/天）</label>
-            <input type="number" min="1" max="100000" defaultValue="1000" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
+        {formData.isPAUpdate === 'yes' && (
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">灰度量级（x/天）</label>
+              <input 
+                type="number" 
+                min="1" 
+                max="100000" 
+                value={formData.grayScaleLevel}
+                onChange={(e) => updateFormField('grayScaleLevel', parseInt(e.target.value) || 0)}
+                disabled={isViewOnly} 
+                className="w-full border rounded px-3 py-2" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">生效时间</label>
+              <input 
+                type="datetime-local" 
+                value={formData.effectiveTime}
+                onChange={(e) => updateFormField('effectiveTime', e.target.value)}
+                disabled={isViewOnly} 
+                className="w-full border rounded px-3 py-2" 
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">生效时间</label>
-            <input type="datetime-local" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
 
   // 渲染物料表单
+  const currentMaterial = formData.materials?.[activeLang] || {};
+  
   const renderMaterialForm = () => (
     <div>
       {/* 语言Tab */}
@@ -280,42 +465,77 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
       
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
-          <input type="text" placeholder="请输入应用名称" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
+          <label className="block text-sm font-medium text-gray-700 mb-1">应用名称 <span className="text-red-500">*</span></label>
+          <input 
+            type="text" 
+            placeholder="请输入应用名称" 
+            disabled={isViewOnly} 
+            className="w-full border rounded px-3 py-2"
+            value={currentMaterial.appName || ''}
+            onChange={(e) => updateMaterialField('appName', e.target.value)}
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">一句话描述</label>
-          <textarea rows={2} placeholder="请输入一句话描述" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
+          <label className="block text-sm font-medium text-gray-700 mb-1">一句话描述 <span className="text-red-500">*</span></label>
+          <textarea 
+            rows={2} 
+            placeholder="请输入一句话描述" 
+            disabled={isViewOnly} 
+            className="w-full border rounded px-3 py-2"
+            value={currentMaterial.shortDescription || ''}
+            onChange={(e) => updateMaterialField('shortDescription', e.target.value)}
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">产品详情</label>
-          <textarea rows={4} placeholder="请输入产品详情" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
+          <label className="block text-sm font-medium text-gray-700 mb-1">产品详情 <span className="text-red-500">*</span></label>
+          <textarea 
+            rows={4} 
+            placeholder="请输入产品详情" 
+            disabled={isViewOnly} 
+            className="w-full border rounded px-3 py-2"
+            value={currentMaterial.productDetail || ''}
+            onChange={(e) => updateMaterialField('productDetail', e.target.value)}
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
-          <input type="text" placeholder="请输入关键词（至少1个，最多5个）" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
+          <label className="block text-sm font-medium text-gray-700 mb-1">关键词 <span className="text-red-500">*</span></label>
+          <input 
+            type="text" 
+            placeholder="请输入关键词（至少1个，最多5个）" 
+            disabled={isViewOnly} 
+            className="w-full border rounded px-3 py-2"
+            value={currentMaterial.keywords?.join(', ') || ''}
+            onChange={(e) => updateMaterialField('keywords', e.target.value.split(',').map(k => k.trim()).filter(Boolean))}
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">更新说明</label>
-          <textarea rows={3} placeholder="请输入更新说明" disabled={isViewOnly} className="w-full border rounded px-3 py-2" />
+          <textarea 
+            rows={3} 
+            placeholder="请输入更新说明" 
+            disabled={isViewOnly} 
+            className="w-full border rounded px-3 py-2"
+            value={currentMaterial.updateDescription || ''}
+            onChange={(e) => updateMaterialField('updateDescription', e.target.value)}
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">应用图标</label>
-          <div className="border-2 border-dashed rounded-lg p-4 text-center">
+          <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
             <Upload className="w-8 h-8 mx-auto text-gray-400" />
             <p className="text-sm text-gray-500 mt-2">点击上传图片（jpg/png，尺寸≥180x180px）</p>
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图</label>
-          <div className="border-2 border-dashed rounded-lg p-4 text-center">
+          <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
             <Upload className="w-8 h-8 mx-auto text-gray-400" />
             <p className="text-sm text-gray-500 mt-2">点击上传图片（1080x594px，≤2MB）</p>
           </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">详情截图（3-5张）</label>
-          <div className="border-2 border-dashed rounded-lg p-4 text-center">
+          <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
             <Upload className="w-8 h-8 mx-auto text-gray-400" />
             <p className="text-sm text-gray-500 mt-2">点击上传截图（竖图480x854/横图854x480）</p>
           </div>
@@ -324,18 +544,36 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
           <label className="block text-sm font-medium text-gray-700 mb-1">是否GP上架</label>
           <div className="flex gap-4 mb-2">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="isGP" value="yes" disabled={isViewOnly} /> 是
+              <input 
+                type="radio" 
+                name="isGP" 
+                value="yes" 
+                checked={currentMaterial.isGP上架 === true}
+                onChange={() => updateMaterialField('isGP上架', true)}
+                disabled={isViewOnly} 
+              /> 是
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="isGP" value="no" defaultChecked disabled={isViewOnly} /> 否
+              <input 
+                type="radio" 
+                name="isGP" 
+                value="no" 
+                checked={currentMaterial.isGP上架 === false}
+                onChange={() => updateMaterialField('isGP上架', false)}
+                disabled={isViewOnly} 
+              /> 否
             </label>
           </div>
-          <input 
-            type="text" 
-            placeholder="请输入GP链接（如：https://play.google.com/store/apps/details?id=xxx）" 
-            disabled={isViewOnly} 
-            className="w-full border rounded px-3 py-2" 
-          />
+          {currentMaterial.isGP上架 && (
+            <input 
+              type="text" 
+              placeholder="请输入GP链接（如：https://play.google.com/store/apps/details?id=xxx）" 
+              disabled={isViewOnly} 
+              className="w-full border rounded px-3 py-2"
+              value={currentMaterial.gpLink || ''}
+              onChange={(e) => updateMaterialField('gpLink', e.target.value)}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -349,27 +587,43 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         <h4 className="font-medium mb-4">审核结果</h4>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="reviewResult" value="pass" disabled={isViewOnly} onChange={() => setValidationErrors([])} />
+            <input 
+              type="radio" 
+              name="reviewResult" 
+              value="pass" 
+              checked={reviewResult === 'pass'}
+              onChange={(e) => { setReviewResult(e.target.value as 'pass'); setValidationErrors([]); }}
+              disabled={isViewOnly} 
+            />
             <CheckCircle className="w-5 h-5 text-green-500" />
             <span>通过</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="reviewResult" value="reject" disabled={isViewOnly} onChange={() => setValidationErrors([])} />
+            <input 
+              type="radio" 
+              name="reviewResult" 
+              value="reject" 
+              checked={reviewResult === 'reject'}
+              onChange={(e) => { setReviewResult(e.target.value as 'reject'); setValidationErrors([]); }}
+              disabled={isViewOnly} 
+            />
             <XCircle className="w-5 h-5 text-red-500" />
             <span>不通过</span>
           </label>
         </div>
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">不通过理由</label>
-          <textarea 
-            rows={3} 
-            placeholder="请输入不通过理由" 
-            disabled={isViewOnly} 
-            className="w-full border rounded px-3 py-2"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-          />
-        </div>
+        {reviewResult === 'reject' && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">不通过理由 <span className="text-red-500">*</span></label>
+            <textarea 
+              rows={3} 
+              placeholder="请输入不通过理由" 
+              disabled={isViewOnly} 
+              className="w-full border rounded px-3 py-2"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       {/* 通道发布详情 */}
@@ -388,52 +642,90 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         <h4 className="font-medium mb-4">运营人员审核结果</h4>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="operatorReviewResult" value="pass" disabled={isViewOnly} onChange={() => setValidationErrors([])} />
+            <input 
+              type="radio" 
+              name="operatorReviewResult" 
+              value="pass" 
+              checked={operatorReviewResult === 'pass'}
+              onChange={(e) => { setOperatorReviewResult(e.target.value as 'pass'); setValidationErrors([]); }}
+              disabled={isViewOnly} 
+            />
             <CheckCircle className="w-5 h-5 text-green-500" />
             <span>通过</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="operatorReviewResult" value="reject" disabled={isViewOnly} onChange={() => setValidationErrors([])} />
+            <input 
+              type="radio" 
+              name="operatorReviewResult" 
+              value="reject" 
+              checked={operatorReviewResult === 'reject'}
+              onChange={(e) => { setOperatorReviewResult(e.target.value as 'reject'); setValidationErrors([]); }}
+              disabled={isViewOnly} 
+            />
             <XCircle className="w-5 h-5 text-red-500" />
             <span>不通过</span>
           </label>
         </div>
-        <div className="mt-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">不通过理由</label>
-          <textarea 
-            rows={2} 
-            placeholder="请输入不通过理由" 
-            disabled={isViewOnly} 
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
+        {operatorReviewResult === 'reject' && (
+          <div className="mt-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">不通过理由 <span className="text-red-500">*</span></label>
+            <textarea 
+              rows={2} 
+              placeholder="请输入不通过理由" 
+              disabled={isViewOnly} 
+              className="w-full border rounded px-3 py-2"
+              value={formData.operatorRejectReason || ''}
+              onChange={(e) => updateFormField('operatorRejectReason', e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
-      {/* 老板审核 */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h4 className="font-medium mb-4">老板审核结果</h4>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="bossReviewResult" value="pass" disabled={isViewOnly} onChange={() => setValidationErrors([])} />
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <span>通过</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="bossReviewResult" value="reject" disabled={isViewOnly} onChange={() => setValidationErrors([])} />
-            <XCircle className="w-5 h-5 text-red-500" />
-            <span>不通过</span>
-          </label>
+      {/* 老板审核 - 仅在运营通过后显示 */}
+      {operatorReviewResult === 'pass' && (
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium mb-4">老板审核结果</h4>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="bossReviewResult" 
+                value="pass" 
+                checked={bossReviewResult === 'pass'}
+                onChange={(e) => { setBossReviewResult(e.target.value as 'pass'); setValidationErrors([]); }}
+                disabled={isViewOnly} 
+              />
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span>通过</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input 
+                type="radio" 
+                name="bossReviewResult" 
+                value="reject" 
+                checked={bossReviewResult === 'reject'}
+                onChange={(e) => { setBossReviewResult(e.target.value as 'reject'); setValidationErrors([]); }}
+                disabled={isViewOnly} 
+              />
+              <XCircle className="w-5 h-5 text-red-500" />
+              <span>不通过</span>
+            </label>
+          </div>
+          {bossReviewResult === 'reject' && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">不通过理由 <span className="text-red-500">*</span></label>
+              <textarea 
+                rows={2} 
+                placeholder="请输入不通过理由" 
+                disabled={isViewOnly} 
+                className="w-full border rounded px-3 py-2"
+                value={formData.bossRejectReason || ''}
+                onChange={(e) => updateFormField('bossRejectReason', e.target.value)}
+              />
+            </div>
+          )}
         </div>
-        <div className="mt-3">
-          <label className="block text-sm font-medium text-gray-700 mb-1">不通过理由</label>
-          <textarea 
-            rows={2} 
-            placeholder="请输入不通过理由" 
-            disabled={isViewOnly} 
-            className="w-full border rounded px-3 py-2"
-          />
-        </div>
-      </div>
+      )}
 
       {/* 物料详情 */}
       <div>
@@ -595,22 +887,22 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
             )}
           </div>
           <div className="flex gap-3">
-            <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">
+            <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition-colors">
               取消
             </button>
-            {!isViewOnly && (
+            {isProcessing && (
               <>
                 {nodeIndex === 1 || nodeIndex === 3 ? (
                   <>
-                    <button onClick={onApprove} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <button onClick={handleApprove} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
                       审核通过
                     </button>
-                    <button onClick={() => onReject?.(rejectReason)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    <button onClick={handleReject} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                       审核拒绝
                     </button>
                   </>
                 ) : (
-                  <button onClick={handleConfirm} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  <button onClick={handleConfirm} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     确认
                   </button>
                 )}
@@ -737,7 +1029,7 @@ const APKDetailPage: React.FC<APKDetailPageProps> = ({ apkProcess, onBack }) => 
                         } ${
                           node.status !== 'pending' ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
                         }`}
-                        disabled={node.status === 'pending'}
+                        disabled={false}
                       >
                         {node.status === 'completed' ? (
                           <CheckCircle className="w-7 h-7" />
