@@ -341,6 +341,21 @@ function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const app = mockApplications.find(a => a.id === id) || mockApplications[0];
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
+
+  // 搜索过滤
+  const filteredApps = app.apps.filter(apk => 
+    searchKeyword === '' ||
+    apk.appName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+    apk.packageName.toLowerCase().includes(searchKeyword.toLowerCase())
+  );
+
+  // 分页
+  const totalPages = Math.ceil(filteredApps.length / pageSize);
+  const paginatedApps = filteredApps.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -388,13 +403,27 @@ function ApplicationDetailPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">应用列表</h2>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            <button onClick={() => setShowAddModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
               + 添加应用
             </button>
           </div>
+
+          {/* 搜索框 */}
+          <div className="mb-4">
+            <div className="relative max-w-xs">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="搜索应用名称、包名..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+                value={searchKeyword}
+                onChange={(e) => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+              />
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {app.apps.map((apk) => (
+            {paginatedApps.map((apk) => (
               <div key={apk.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
@@ -443,8 +472,62 @@ function ApplicationDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* 分页 */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                上一页
+              </button>
+              <span className="px-3 py-1">
+                {currentPage} / {totalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                下一页
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 添加应用Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+            <h3 className="text-lg font-semibold mb-4">添加应用到当前班车</h3>
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="搜索可添加的应用..."
+                className="w-full px-4 py-2 border rounded-lg"
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
+              {['WhatsApp', 'Facebook', 'YouTube', 'Twitter', 'Snapchat'].map(name => (
+                <div key={name} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">📱</div>
+                  <div>
+                    <div className="font-medium">{name}</div>
+                    <div className="text-xs text-gray-500">com.example.{name.toLowerCase()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认添加</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
