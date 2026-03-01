@@ -305,6 +305,7 @@ function MaterialUploadModal({
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
+  const [availableLangs, setAvailableLangs] = useState(['en']); // 默认只有英语
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     versionCode: '',
@@ -828,6 +829,7 @@ function ChannelApplyModal({
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
+  const [availableLangs, setAvailableLangs] = useState(['en']); // 默认只有英语
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showBrandDropdown, setShowBrandDropdown] = useState(false);
@@ -887,6 +889,37 @@ function ChannelApplyModal({
       : [...currentList, value];
     setFormData({ ...formData, [field]: newList });
   };
+
+  // 添加语言
+  const addLanguage = (code: string) => {
+    if (!availableLangs.includes(code)) {
+      setAvailableLangs([...availableLangs, code]);
+      setActiveLang(code);
+    }
+  };
+
+  // 删除语言（英语不可删除）
+  const removeLanguage = (code: string) => {
+    if (code !== 'en' && availableLangs.includes(code)) {
+      const newLangs = availableLangs.filter(l => l !== code);
+      setAvailableLangs(newLangs);
+      if (activeLang === code) {
+        setActiveLang('en');
+      }
+    }
+  };
+
+  // 所有可选语言
+  const allLanguages = [
+    { code: 'zh', name: '中文' },
+    { code: 'th', name: '泰语' },
+    { code: 'id', name: '印尼语' },
+    { code: 'pt', name: '葡萄牙语' },
+    { code: 'ru', name: '俄语' },
+    { code: 'es', name: '西班牙语' },
+    { code: 'ar', name: '阿拉伯语' },
+    { code: 'ko', name: '韩语' },
+  ];
 
   // 验证基础信息必填字段
   const validateBasic = () => {
@@ -1278,16 +1311,35 @@ function ChannelApplyModal({
           {activeTab === 'material' && (
             <div className="space-y-4">
               {/* 语言Tab */}
-              <div className="flex border-b">
-                {languageOptions.map(lang => (
-                  <button
-                    key={lang.code}
-                    onClick={() => setActiveLang(lang.code)}
-                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
-                  >
-                    {lang.name} {lang.code === 'en' && <span className="text-red-500 ml-1">*</span>}
-                  </button>
-                ))}
+              <div className="flex border-b items-center flex-wrap gap-1">
+                {availableLangs.map(code => {
+                  const lang = languageOptions.find(l => l.code === code);
+                  return (
+                    <button
+                      key={code}
+                      onClick={() => setActiveLang(code)}
+                      className={`px-4 py-2 -mb-px flex items-center gap-1 ${activeLang === code ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+                    >
+                      {lang?.name || code}
+                      {code !== 'en' && (
+                        <span 
+                          onClick={(e) => { e.stopPropagation(); removeLanguage(code); }}
+                          className="ml-1 text-red-500 hover:text-red-700 cursor-pointer"
+                        >
+                          ×
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {/* 添加语言按钮 */}
+                {availableLangs.length < allLanguages.length && (
+                  <div className="relative">
+                    <button className="px-2 py-1 text-blue-500 hover:text-blue-700 text-sm">
+                      + 添加语言
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* 物料表单 */}
