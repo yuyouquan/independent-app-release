@@ -11,7 +11,8 @@ import {
   FileText,
   File,
   Tag,
-  AlertTriangle
+  AlertTriangle,
+  Image
 } from 'lucide-react';
 import type { APKProcess, ProcessNode } from '../types';
 import { mockOperationRecords, languageOptions, appCategoryOptions, countryOptions, brandOptions, deviceOptions, androidVersionOptions, tosVersionOptions } from '../data/mockData';
@@ -653,7 +654,7 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
   const renderChannelReviewForm = () => (
     <div className="space-y-6">
       {/* 审核结果 - 固定在最上方 */}
-      <div className="bg-gray-50 p-4 rounded-lg sticky top-0">
+      <div className="bg-gray-50 p-4 rounded-lg sticky top-0 z-10">
         <h4 className="font-medium mb-4">审核结果</h4>
         <div className="flex gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
@@ -696,113 +697,221 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         )}
       </div>
 
-      {/* 申请信息汇总 - 只读展示 */}
+      {/* Tab切换：基础信息 / 所需材料 */}
       <div>
-        <h4 className="font-medium mb-4 flex items-center gap-2">
-          <FileText className="w-4 h-4" />
-          申请信息汇总
-        </h4>
-        <div className="bg-white border rounded-lg p-4 space-y-4">
-          {/* 应用基本信息 */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <div className="text-xs text-gray-500">应用名称</div>
-              <div className="font-medium">{apkProcess.appName}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">应用包名</div>
-              <div className="font-medium">{apkProcess.packageName}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">应用类型</div>
-              <div className="font-medium">{apkProcess.appType || 'Social'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">版本号</div>
-              <div className="font-medium">{apkProcess.versionCode || '22651'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">应用分类</div>
-              <div className="font-medium">Social</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">系统应用</div>
-              <div className="font-medium">否</div>
-            </div>
-          </div>
-          
-          <hr className="my-2" />
-          
-          {/* 过滤条件 */}
-          <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">过滤条件</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-xs text-gray-500">国家</div>
-                <div className="font-medium">全部国家</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">品牌</div>
-                <div className="font-medium">全部品牌</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">机型</div>
-                <div className="font-medium">全部机型</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">tOS版本</div>
-                <div className="font-medium">全部版本</div>
-              </div>
-            </div>
-          </div>
-          
-          <hr className="my-2" />
-          
-          {/* APK文件信息 */}
-          <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">APK文件</div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <File className="w-8 h-8 text-blue-500" />
-              <div>
-                <div className="font-medium">{apkProcess.appName}.apk</div>
-                <div className="text-xs text-gray-500">版本: {apkProcess.versionCode || '22651'}</div>
-              </div>
-              <button className="ml-auto text-blue-600 text-sm hover:underline">
-                下载
-              </button>
-            </div>
-          </div>
-          
-          {/* 测试报告 */}
-          <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">测试报告</div>
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-              <FileText className="w-8 h-8 text-green-500" />
-              <div>
-                <div className="font-medium">测试报告.pdf</div>
-                <div className="text-xs text-gray-500">已上传</div>
-              </div>
-              <button className="ml-auto text-blue-600 text-sm hover:underline">
-                查看
-              </button>
-            </div>
-          </div>
-          
-          {/* 申请人信息 */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            <div>
-              <div className="text-xs text-gray-500">申请人</div>
-              <div className="font-medium">{apkProcess.nodes[0]?.operator || '张三'}</div>
-            </div>
-            <div>
-              <div className="text-xs text-gray-500">申请时间</div>
-              <div className="font-medium">{apkProcess.nodes?.[0]?.operatorTime || '2026-03-01 10:00:00'}</div>
-            </div>
-          </div>
+        <div className="flex border-b mb-4">
+          <button
+            onClick={() => setActiveTab('basic')}
+            className={`px-4 py-2 -mb-px ${activeTab === 'basic' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+          >
+            基础信息
+          </button>
+          <button
+            onClick={() => setActiveTab('material')}
+            className={`px-4 py-2 -mb-px ${activeTab === 'material' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+          >
+            所需材料
+          </button>
         </div>
+
+        {/* 基础信息Tab内容 */}
+        {activeTab === 'basic' && (
+          <div className="space-y-4">
+            <div className="bg-white border rounded-lg p-4">
+              <h4 className="font-medium mb-4 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                应用基本信息
+              </h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500">应用名称</div>
+                  <div className="font-medium">{apkProcess.appName}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">应用包名</div>
+                  <div className="font-medium">{apkProcess.packageName}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">应用类型</div>
+                  <div className="font-medium">{apkProcess.appType || 'Social'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">版本号</div>
+                  <div className="font-medium">{apkProcess.versionCode || '22651'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">应用分类</div>
+                  <div className="font-medium">{formData.appCategory || 'Social'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">系统应用</div>
+                  <div className="font-medium">{formData.systemApp === 'yes' ? '是' : '否'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* APK文件 */}
+            <div className="bg-white border rounded-lg p-4">
+              <h4 className="font-medium mb-4">APK文件</h4>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <File className="w-8 h-8 text-blue-500" />
+                <div>
+                  <div className="font-medium">{apkProcess.appName}.apk</div>
+                  <div className="text-xs text-gray-500">版本: {apkProcess.versionCode || '22651'}</div>
+                </div>
+                <button className="ml-auto text-blue-600 text-sm hover:underline">
+                  下载
+                </button>
+              </div>
+            </div>
+
+            {/* 测试报告 */}
+            <div className="bg-white border rounded-lg p-4">
+              <h4 className="font-medium mb-4">测试报告</h4>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <FileText className="w-8 h-8 text-green-500" />
+                <div>
+                  <div className="font-medium">测试报告.pdf</div>
+                  <div className="text-xs text-gray-500">已上传</div>
+                </div>
+                <button className="ml-auto text-blue-600 text-sm hover:underline">
+                  查看
+                </button>
+              </div>
+            </div>
+
+            {/* 发布范围 */}
+            <div className="bg-white border rounded-lg p-4">
+              <h4 className="font-medium mb-4">发布范围</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500">国家</div>
+                  <div className="font-medium">{formData.countryType === 'all' ? '全部国家' : formData.countryType}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">品牌</div>
+                  <div className="font-medium">{formData.brandType === 'all' ? '全部品牌' : formData.brandType}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">机型</div>
+                  <div className="font-medium">{formData.deviceType === 'all' ? '全部机型' : formData.deviceType}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">tOS版本</div>
+                  <div className="font-medium">{formData.tosVersionType === 'all' ? '全部版本' : formData.tosVersionType}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">安卓版本</div>
+                  <div className="font-medium">{formData.androidVersionType === 'all' ? '全部版本' : formData.androidVersionType}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">过滤印度</div>
+                  <div className="font-medium">{formData.filterIndia === 'yes' ? '是' : '否'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* 申请人信息 */}
+            <div className="bg-white border rounded-lg p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500">申请人</div>
+                  <div className="font-medium">{apkProcess.nodes[0]?.operator || '张三'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">申请时间</div>
+                  <div className="font-medium">{apkProcess.nodes[0]?.operatorTime || '2026-03-01 10:00:00'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 所需材料Tab内容 */}
+        {activeTab === 'material' && (
+          <div className="space-y-4">
+            {/* 语言Tab */}
+            <div className="flex border-b mb-4">
+              {languageOptions.map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => setActiveLang(lang.code)}
+                  className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                >
+                  {lang.name}
+                </button>
+              ))}
+            </div>
+
+            {/* 当前语言物料 */}
+            <div className="bg-white border rounded-lg p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-gray-500">应用名称</div>
+                  <div className="font-medium">{formData.materials?.[activeLang]?.appName || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500">GP上架</div>
+                  <div className="font-medium">{formData.materials?.[activeLang]?.isGP上架 ? '是' : '否'}</div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">一句话描述</div>
+                <div className="font-medium">{formData.materials?.[activeLang]?.shortDescription || '-'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">产品详情</div>
+                <div className="font-medium">{formData.materials?.[activeLang]?.productDetail || '-'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">更新说明</div>
+                <div className="font-medium">{formData.materials?.[activeLang]?.updateDescription || '-'}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">关键词</div>
+                <div className="font-medium">{(formData.materials?.[activeLang]?.keywords || []).join(', ') || '-'}</div>
+              </div>
+              {formData.materials?.[activeLang]?.gpLink && (
+                <div>
+                  <div className="text-xs text-gray-500">GP链接</div>
+                  <div className="font-medium text-blue-600">{formData.materials[activeLang].gpLink}</div>
+                </div>
+              )}
+              
+              {/* 物料图片 */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+                <div>
+                  <div className="text-xs text-gray-500 mb-2">应用图标</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Image className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-2">置顶大图</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Image className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-2">详情截图1</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Image className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-2">详情截图2</div>
+                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <Image className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
+                <div className="font-medium">全部机型</div>
 
   // 渲染物料审核表单
   const renderMaterialReviewForm = () => (
