@@ -14,7 +14,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import type { APKProcess, ProcessNode } from '../types';
-import { mockOperationRecords, languageOptions, appCategoryOptions } from '../data/mockData';
+import { mockOperationRecords, languageOptions, appCategoryOptions, countryOptions, brandOptions, deviceOptions, androidVersionOptions, tosVersionOptions } from '../data/mockData';
+import MultiLevelSelect from '../components/MultiLevelSelect';
 
 // 流程节点名称
 const NODE_NAMES = [
@@ -79,6 +80,14 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
     betaDeviceType: 'all',
     androidVersionType: 'all',
     tosVersionType: 'all',
+    // 多选字段
+    countries: [],
+    brands: [],
+    devices: [],
+    betaDevices: [],
+    androidVersions: [],
+    tosVersions: [],
+    // PA更新字段
     isPAUpdate: 'yes',
     grayScaleLevel: 1000,
     effectiveTime: '',
@@ -307,6 +316,7 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
         
         {/* 发布范围 */}
         <div className="mt-4 grid grid-cols-2 gap-4">
+          {/* 发布国家 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">发布国家</label>
             <select 
@@ -319,7 +329,17 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
             </select>
+            {formData.countryType !== 'all' && (
+              <MultiLevelSelect
+                options={countryOptions.map(c => ({ value: c.value, label: c.label }))}
+                value={formData.countries || []}
+                onChange={(vals) => updateFormField('countries', vals)}
+                placeholder="选择国家"
+                disabled={isViewOnly}
+              />
+            )}
           </div>
+          {/* 发布品牌 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
             <select 
@@ -332,7 +352,17 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
             </select>
+            {formData.brandType !== 'all' && (
+              <MultiLevelSelect
+                options={brandOptions.map(b => ({ value: b, label: b }))}
+                value={formData.brands || []}
+                onChange={(vals) => updateFormField('brands', vals)}
+                placeholder="选择品牌"
+                disabled={isViewOnly}
+              />
+            )}
           </div>
+          {/* 发布机型 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">发布机型</label>
             <select 
@@ -345,7 +375,17 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
             </select>
+            {formData.deviceType !== 'all' && (
+              <MultiLevelSelect
+                options={deviceOptions.map(d => ({ value: d, label: d }))}
+                value={formData.devices || []}
+                onChange={(vals) => updateFormField('devices', vals)}
+                placeholder="选择机型"
+                disabled={isViewOnly}
+              />
+            )}
           </div>
+          {/* 内测机型 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">内测机型</label>
             <select 
@@ -358,7 +398,17 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
             </select>
+            {formData.betaDeviceType !== 'all' && (
+              <MultiLevelSelect
+                options={deviceOptions.map(d => ({ value: d, label: d }))}
+                value={formData.betaDevices || []}
+                onChange={(vals) => updateFormField('betaDevices', vals)}
+                placeholder="选择内测机型"
+                disabled={isViewOnly}
+              />
+            )}
           </div>
+          {/* 适用安卓版本 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">适用安卓版本</label>
             <select 
@@ -371,7 +421,17 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
             </select>
+            {formData.androidVersionType !== 'all' && (
+              <MultiLevelSelect
+                options={androidVersionOptions.map(v => ({ value: v, label: v }))}
+                value={formData.androidVersions || []}
+                onChange={(vals) => updateFormField('androidVersions', vals)}
+                placeholder="选择安卓版本"
+                disabled={isViewOnly}
+              />
+            )}
           </div>
+          {/* 适用tOS版本 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">适用tOS版本</label>
             <select 
@@ -384,6 +444,15 @@ const NodeModal: React.FC<NodeModalProps> = ({ nodeIndex, node, apkProcess, onCl
               <option value="include">包含</option>
               <option value="exclude">不包含</option>
             </select>
+            {formData.tosVersionType !== 'all' && (
+              <MultiLevelSelect
+                options={tosVersionOptions.map(v => ({ value: v, label: v }))}
+                value={formData.tosVersions || []}
+                onChange={(vals) => updateFormField('tosVersions', vals)}
+                placeholder="选择tOS版本"
+                disabled={isViewOnly}
+              />
+            )}
           </div>
         </div>
       </div>

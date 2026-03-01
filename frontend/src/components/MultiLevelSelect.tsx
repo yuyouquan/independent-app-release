@@ -14,6 +14,7 @@ interface MultiLevelSelectProps {
   label?: string;
   required?: boolean;
   error?: string;
+  disabled?: boolean;
 }
 
 export const MultiLevelSelect: React.FC<MultiLevelSelectProps> = ({
@@ -23,7 +24,8 @@ export const MultiLevelSelect: React.FC<MultiLevelSelectProps> = ({
   placeholder = '请选择',
   label,
   required = false,
-  error
+  error,
+  disabled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -62,18 +64,20 @@ export const MultiLevelSelect: React.FC<MultiLevelSelectProps> = ({
     return opts.map((opt) => (
       <div key={opt.value} style={{ marginLeft: `${level * 16}px` }}>
         <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-100 rounded cursor-pointer">
-          <label className="flex items-center cursor-pointer flex-1">
+          <label className={`flex items-center flex-1 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
             <input
               type="checkbox"
               checked={value.includes(opt.value)}
-              onChange={() => toggleOption(opt.value)}
+              onChange={() => !disabled && toggleOption(opt.value)}
+              disabled={disabled}
               className="mr-2 rounded"
             />
             <span className="text-sm">{opt.label}</span>
           </label>
           {opt.children && opt.children.length > 0 && (
             <button
-              onClick={(e) => toggleExpand(opt.value, e)}
+              onClick={(e) => !disabled && toggleExpand(opt.value, e)}
+              disabled={disabled}
               className="text-gray-500 hover:text-gray-700 p-1"
             >
               {expandedNodes.has(opt.value) ? '▼' : '▶'}
@@ -106,10 +110,10 @@ export const MultiLevelSelect: React.FC<MultiLevelSelectProps> = ({
         </label>
       )}
       <div
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
         className={`border rounded-lg px-3 py-2 cursor-pointer min-h-[42px] flex items-center flex-wrap gap-1 ${
           error ? 'border-red-500' : 'border-gray-300'
-        } ${isOpen ? 'ring-2 ring-blue-500' : ''}`}
+        } ${isOpen && !disabled ? 'ring-2 ring-blue-500' : ''} ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
       >
         {selectedLabels.length > 0 ? (
           selectedLabels.map((l, i) => (

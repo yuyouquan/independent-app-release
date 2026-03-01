@@ -44,6 +44,26 @@ export const appCategoryOptions = [
   'Auto & Vehicles',
 ];
 
+// 发布国家
+export const countryOptions = [
+  { value: 'NG', label: '尼日利亚' },
+  { value: 'KE', label: '肯尼亚' },
+  { value: 'GH', label: '加纳' },
+  { value: 'EG', label: '埃及' },
+  { value: 'SA', label: '沙特阿拉伯' },
+  { value: 'AE', label: '阿联酋' },
+  { value: 'IN', label: '印度' },
+  { value: 'BD', label: '孟加拉' },
+  { value: 'PK', label: '巴基斯坦' },
+  { value: 'ID', label: '印尼' },
+  { value: 'PH', label: '菲律宾' },
+  { value: 'TH', label: '泰国' },
+  { value: 'VN', label: '越南' },
+  { value: 'BR', label: '巴西' },
+  { value: 'MX', label: '墨西哥' },
+  { value: 'CO', label: '哥伦比亚' },
+];
+
 // 发布品牌
 export const brandOptions = [
   'Tecno',
