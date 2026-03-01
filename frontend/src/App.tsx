@@ -1,13 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useParams } from 'react-router-dom';
-import { Search, Plus, Eye, ChevronDown, ArrowLeft, CheckCircle, XCircle, Clock, AlertCircle, Upload, X } from 'lucide-react';
-import { mockApplications, mockTodos, shuttleOptions, tosVersionOptions, apkStatusOptions, Application, APKItem, TodoItem } from './data/mockData';
-import { 
-  appCategoryOptions, brandOptions, phoneModelOptions, 
-  androidVersionOptions, tosVersionOptions as tosOpts, 
-  countryOptions, keywordOptions, AppCategory, Brand, PhoneModel,
-  AndroidVersion, TosVersion, Country, ConditionType
-} from './types';
+import { Search, Plus, Eye, ChevronDown, ArrowLeft, CheckCircle, XCircle, Clock, AlertCircle, FileText, Upload, X } from 'lucide-react';
+import { mockApplications, mockTodos, shuttleOptions, tosVersionOptions, apkStatusOptions, Application, APKItem, TodoItem, ProcessNode } from './data/mockData';
 
 // 状态颜色映射
 const statusColors = {
@@ -29,611 +23,323 @@ const statusLabels = {
   processing: '进行中',
 };
 
+// 流程节点名称
+const NODE_NAMES = [
+  '通道发布申请',
+  '通道发布审核',
+  '物料上传',
+  '物料审核',
+  '应用上架',
+  '业务内测',
+  '灰度监控',
+];
+
+// 语言选项
+const languageOptions = [
+  { code: 'en', name: '英语' },
+  { code: 'zh', name: '中文' },
+  { code: 'th', name: '泰语' },
+  { code: 'id', name: '印尼语' },
+  { code: 'pt', name: '葡萄牙语' },
+];
+
+// 应用分类选项
+const appCategoryOptions = [
+  'Social', 'Music', 'Video', 'Shopping', 'Finance', 
+  'Travel', 'Weather', 'Education', 'Game', 'Business'
+];
+
+// 国家选项
+const countryOptions = [
+  '美国', '英国', '德国', '法国', '西班牙', '意大利', '巴西', '印度',
+  '印尼', '泰国', '越南', '菲律宾', '马来西亚', '新加坡', '日本', '韩国'
+];
+
+// 品牌选项
+const brandOptions = ['Tecno', 'Infinix', 'itel'];
+
+// 机型选项
+const deviceOptions = ['X6841_H6941', 'X6858_H8917', 'KO5_H8925', 'Pova'];
+
 // ==================== 通道发布申请Modal ====================
-interface ChannelApplyModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (data: any) => void;
-}
-
-function ChannelApplyModal({ isOpen, onClose, onSubmit }: ChannelApplyModalProps) {
-  const [activeTab, setActiveTab] = useState<'basic' | 'materials' | 'paUpdate'>('basic');
-  const [activeLanguage, setActiveLanguage] = useState(0);
-  const [languages, setLanguages] = useState([{ 
-    id: 1, 
-    name: 'English', 
-    appName: '', 
-    shortDescription: '', 
-    productDetails: '', 
-    updateNotes: '', 
-    keywords: [] as string[],
-    isGP上架: false,
-    gpLink: ''
-  }]);
-
-  // 基础信息
-  const [basicInfo, setBasicInfo] = useState({
+function ChannelApplyModal({ 
+  isOpen, 
+  onClose, 
+  apk,
+  onSave 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  apk: APKItem;
+  onSave: (data: any) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
+  const [activeLang, setActiveLang] = useState('en');
+  const [formData, setFormData] = useState({
     versionCode: '',
-    testReport: '',
-    category: '' as AppCategory | '',
-    isSystemApp: false,
-    publishCountries: { type: '全部' as ConditionType, countries: [] as Country[] },
-    publishBrands: { type: '全部' as ConditionType, brands: [] as Brand[] },
-    publishModels: { type: '全部' as ConditionType, models: [] as PhoneModel[] },
-    testModels: { type: '全部' as ConditionType, models: [] as PhoneModel[] },
-    androidVersions: { type: '全部' as ConditionType, versions: [] as AndroidVersion[] },
-    tosVersions: { type: '全部' as ConditionType, versions: [] as TosVersion[] },
-    filterIndia: false,
+    appCategory: 'Social',
+    systemApp: 'no',
+    filterIndia: 'no',
+    countryType: 'all',
+    countryList: [] as string[],
+    brandType: 'all',
+    brandList: [] as string[],
+    deviceType: 'all',
+    deviceList: [] as string[],
+    betaDeviceType: 'all',
+    betaDeviceList: [] as string[],
+    androidVersionType: 'all',
+    androidVersionList: [] as string[],
+    tosVersionType: 'all',
+    tosVersionList: [] as string[],
+    isPAUpdate: 'yes',
+    grayScaleLevel: 1000,
+    effectiveTime: '',
+    materials: {
+      en: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      zh: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      th: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      id: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      pt: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+    }
   });
-
-  // PA更新
-  const [paUpdate, setPaUpdate] = useState({
-    isPAUpdate: true,
-    grayScale: 1000,
-    effectiveTime: ''
-  });
-
-  const addLanguage = (lang: string) => {
-    if (!['English', '俄语', '葡萄牙语', '西班牙语', '阿语', '韩语'].includes(lang)) return;
-    const langMap: Record<string, string> = { '俄语': 'Russian', '葡萄牙语': 'Portuguese', '西班牙语': 'Spanish', '阿语': 'Arabic', '韩语': 'Korean' };
-    setLanguages([...languages, { 
-      id: Date.now(), 
-      name: langMap[lang] || lang, 
-      appName: '', 
-      shortDescription: '', 
-      productDetails: '', 
-      updateNotes: '', 
-      keywords: [],
-      isGP上架: false,
-      gpLink: ''
-    }]);
-  };
-
-  const removeLanguage = (id: number) => {
-    if (languages.length <= 1) return;
-    setLanguages(languages.filter(l => l.id !== id));
-    if (activeLanguage >= languages.length - 1) setActiveLanguage(0);
-  };
-
-  const handleSubmit = () => {
-    onSubmit({
-      basicInfo,
-      materials: { languages },
-      paUpdate
-    });
-    onClose();
-  };
 
   if (!isOpen) return null;
 
+  const handleSave = () => {
+    onSave(formData);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold">通道发布申请</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[0]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b">
-          <button 
-            onClick={() => setActiveTab('basic')}
-            className={`px-6 py-3 ${activeTab === 'basic' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
-          >
-            基础信息
-          </button>
-          <button 
-            onClick={() => setActiveTab('materials')}
-            className={`px-6 py-3 ${activeTab === 'materials' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
-          >
-            所需物料
-          </button>
-          <button 
-            onClick={() => setActiveTab('paUpdate')}
-            className={`px-6 py-3 ${activeTab === 'paUpdate' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
-          >
-            PA更新
-          </button>
+        {/* Tab切换 */}
+        <div className="px-6 py-3 border-b bg-gray-50">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              基础信息
+            </button>
+            <button
+              onClick={() => setActiveTab('material')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              所需物料
+            </button>
+          </div>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="p-6 overflow-y-auto max-h-[50vh]">
           {activeTab === 'basic' && (
-            <div className="space-y-4">
-              {/* 自动带出的字段 */}
-              <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <div className="text-xs text-gray-500">应用名称</div>
-                  <div className="font-medium">Spotify</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500">应用包名</div>
-                  <div className="font-medium">com.spotify.music</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500">应用类型</div>
-                  <div className="font-medium">Music</div>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-500">应用APK</div>
-                  <div className="font-medium text-blue-600">spotify-22651.apk</div>
-                </div>
-              </div>
-
-              {/* 可编辑字段 */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">应用版本号 <span className="text-red-500">*</span></label>
-                  <select 
-                    className="w-full border rounded-lg px-3 py-2"
-                    value={basicInfo.versionCode}
-                    onChange={(e) => setBasicInfo({...basicInfo, versionCode: e.target.value})}
-                  >
-                    <option value="">请选择版本</option>
-                    <option value="22651">v22651</option>
-                    <option value="22650">v22650</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">应用分类 <span className="text-red-500">*</span></label>
-                  <select 
-                    className="w-full border rounded-lg px-3 py-2"
-                    value={basicInfo.category}
-                    onChange={(e) => setBasicInfo({...basicInfo, category: e.target.value as AppCategory})}
-                  >
-                    <option value="">请选择分类</option>
-                    {appCategoryOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">应用测试PASS报告</label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
-                    <Upload className="w-6 h-6 mx-auto text-gray-400" />
-                    <div className="text-sm text-gray-500 mt-1">点击上传报告</div>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">系统应用</label>
-                  <div className="flex gap-4 mt-2">
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        checked={basicInfo.isSystemApp === true}
-                        onChange={() => setBasicInfo({...basicInfo, isSystemApp: true})}
-                        className="mr-2" 
-                      />
-                      是
-                    </label>
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        checked={basicInfo.isSystemApp === false}
-                        onChange={() => setBasicInfo({...basicInfo, isSystemApp: false})}
-                        className="mr-2" 
-                      />
-                      否
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              {/* 条件选择字段 */}
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">发布国家</label>
-                  <div className="flex gap-2">
-                    <select 
-                      className="border rounded-lg px-3 py-2 w-32"
-                      value={basicInfo.publishCountries.type}
-                      onChange={(e) => setBasicInfo({
-                        ...basicInfo, 
-                        publishCountries: {...basicInfo.publishCountries, type: e.target.value as ConditionType}
-                      })}
-                    >
-                      <option value="全部">全部</option>
-                      <option value="包含">包含</option>
-                      <option value="不包含">不包含</option>
-                    </select>
-                    <div className="flex-1 border rounded-lg p-2 min-h-[42px] flex flex-wrap gap-1">
-                      {countryOptions.map(opt => (
-                        <label key={opt.value} className="flex items-center text-sm">
-                          <input 
-                            type="checkbox"
-                            checked={basicInfo.publishCountries.countries.includes(opt.value as Country)}
-                            onChange={(e) => {
-                              const countries = e.target.checked
-                                ? [...basicInfo.publishCountries.countries, opt.value as Country]
-                                : basicInfo.publishCountries.countries.filter(c => c !== opt.value);
-                              setBasicInfo({
-                                ...basicInfo, 
-                                publishCountries: {...basicInfo.publishCountries, countries}
-                              });
-                            }}
-                            className="mr-1"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">发布品牌</label>
-                  <div className="flex gap-2">
-                    <select 
-                      className="border rounded-lg px-3 py-2 w-32"
-                      value={basicInfo.publishBrands.type}
-                      onChange={(e) => setBasicInfo({
-                        ...basicInfo, 
-                        publishBrands: {...basicInfo.publishBrands, type: e.target.value as ConditionType}
-                      })}
-                    >
-                      <option value="全部">全部</option>
-                      <option value="包含">包含</option>
-                      <option value="不包含">不包含</option>
-                    </select>
-                    <div className="flex-1 border rounded-lg p-2 min-h-[42px] flex flex-wrap gap-1">
-                      {brandOptions.map(opt => (
-                        <label key={opt.value} className="flex items-center text-sm">
-                          <input 
-                            type="checkbox"
-                            checked={basicInfo.publishBrands.brands.includes(opt.value)}
-                            onChange={(e) => {
-                              const brands = e.target.checked
-                                ? [...basicInfo.publishBrands.brands, opt.value]
-                                : basicInfo.publishBrands.brands.filter(b => b !== opt.value);
-                              setBasicInfo({
-                                ...basicInfo, 
-                                publishBrands: {...basicInfo.publishBrands, brands}
-                              });
-                            }}
-                            className="mr-1"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">发布机型</label>
-                  <div className="flex gap-2">
-                    <select 
-                      className="border rounded-lg px-3 py-2 w-32"
-                      value={basicInfo.publishModels.type}
-                      onChange={(e) => setBasicInfo({
-                        ...basicInfo, 
-                        publishModels: {...basicInfo.publishModels, type: e.target.value as ConditionType}
-                      })}
-                    >
-                      <option value="全部">全部</option>
-                      <option value="包含">包含</option>
-                      <option value="不包含">不包含</option>
-                    </select>
-                    <div className="flex-1 border rounded-lg p-2 min-h-[42px] flex flex-wrap gap-1">
-                      {phoneModelOptions.map(opt => (
-                        <label key={opt.value} className="flex items-center text-sm">
-                          <input 
-                            type="checkbox"
-                            checked={basicInfo.publishModels.models.includes(opt.value)}
-                            onChange={(e) => {
-                              const models = e.target.checked
-                                ? [...basicInfo.publishModels.models, opt.value]
-                                : basicInfo.publishModels.models.filter(m => m !== opt.value);
-                              setBasicInfo({
-                                ...basicInfo, 
-                                publishModels: {...basicInfo.publishModels, models}
-                              });
-                            }}
-                            className="mr-1"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">适用安卓版本</label>
-                  <div className="flex gap-2">
-                    <select 
-                      className="border rounded-lg px-3 py-2 w-32"
-                      value={basicInfo.androidVersions.type}
-                      onChange={(e) => setBasicInfo({
-                        ...basicInfo, 
-                        androidVersions: {...basicInfo.androidVersions, type: e.target.value as ConditionType}
-                      })}
-                    >
-                      <option value="全部">全部</option>
-                      <option value="包含">包含</option>
-                      <option value="不包含">不包含</option>
-                    </select>
-                    <div className="flex-1 border rounded-lg p-2 min-h-[42px] flex flex-wrap gap-1">
-                      {androidVersionOptions.map(opt => (
-                        <label key={opt.value} className="flex items-center text-sm">
-                          <input 
-                            type="checkbox"
-                            checked={basicInfo.androidVersions.versions.includes(opt.value)}
-                            onChange={(e) => {
-                              const versions = e.target.checked
-                                ? [...basicInfo.androidVersions.versions, opt.value]
-                                : basicInfo.androidVersions.versions.filter(v => v !== opt.value);
-                              setBasicInfo({
-                                ...basicInfo, 
-                                androidVersions: {...basicInfo.androidVersions, versions}
-                              });
-                            }}
-                            className="mr-1"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">适用tOS版本</label>
-                  <div className="flex gap-2">
-                    <select 
-                      className="border rounded-lg px-3 py-2 w-32"
-                      value={basicInfo.tosVersions.type}
-                      onChange={(e) => setBasicInfo({
-                        ...basicInfo, 
-                        tosVersions: {...basicInfo.tosVersions, type: e.target.value as ConditionType}
-                      })}
-                    >
-                      <option value="全部">全部</option>
-                      <option value="包含">包含</option>
-                      <option value="不包含">不包含</option>
-                    </select>
-                    <div className="flex-1 border rounded-lg p-2 min-h-[42px] flex flex-wrap gap-1">
-                      {tosOpts.map(opt => (
-                        <label key={opt.value} className="flex items-center text-sm">
-                          <input 
-                            type="checkbox"
-                            checked={basicInfo.tosVersions.versions.includes(opt.value)}
-                            onChange={(e) => {
-                              const versions = e.target.checked
-                                ? [...basicInfo.tosVersions.versions, opt.value]
-                                : basicInfo.tosVersions.versions.filter(v => v !== opt.value);
-                              setBasicInfo({
-                                ...basicInfo, 
-                                tosVersions: {...basicInfo.tosVersions, versions}
-                              });
-                            }}
-                            className="mr-1"
-                          />
-                          {opt.label}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">是否需要过滤印度</label>
-                  <div className="flex gap-4 mt-2">
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        checked={basicInfo.filterIndia === true}
-                        onChange={() => setBasicInfo({...basicInfo, filterIndia: true})}
-                        className="mr-2" 
-                      />
-                      是
-                    </label>
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        checked={basicInfo.filterIndia === false}
-                        onChange={() => setBasicInfo({...basicInfo, filterIndia: false})}
-                        className="mr-2" 
-                      />
-                      否
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'materials' && (
-            <div className="space-y-4">
-              {/* 语言Tab */}
-              <div className="flex gap-2 border-b pb-2">
-                {languages.map((lang, idx) => (
-                  <div key={lang.id} className="flex items-center">
-                    <button
-                      onClick={() => setActiveLanguage(idx)}
-                      className={`px-3 py-1 rounded ${activeLanguage === idx ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}`}
-                    >
-                      {lang.name}
-                    </button>
-                    {languages.length > 1 && idx > 0 && (
-                      <button onClick={() => removeLanguage(lang.id)} className="ml-1 text-red-500 hover:text-red-700">
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <div className="relative">
-                  <select 
-                    className="appearance-none bg-gray-100 px-3 py-1 rounded pr-6 text-sm cursor-pointer"
-                    onChange={(e) => { if(e.target.value) { addLanguage(e.target.value); e.target.value = ''; } }}
-                  >
-                    <option value="">+ 添加语言</option>
-                    {!languages.find(l => l.name === 'Russian') && <option value="俄语">俄语</option>}
-                    {!languages.find(l => l.name === 'Portuguese') && <option value="葡萄牙语">葡萄牙语</option>}
-                    {!languages.find(l => l.name === 'Spanish') && <option value="西班牙语">西班牙语</option>}
-                    {!languages.find(l => l.name === 'Arabic') && <option value="阿语">阿语</option>}
-                    {!languages.find(l => l.name === 'Korean') && <option value="韩语">韩语</option>}
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* 语言内容 */}
-              <div className="space-y-4">
+            <div className="space-y-6">
+              {/* 应用基本信息 */}
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  应用基本信息
+                </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">应用名称</label>
-                    <input 
-                      type="text" 
-                      className="w-full border rounded-lg px-3 py-2"
-                      value={languages[activeLanguage].appName}
-                      onChange={(e) => {
-                        const newLangs = [...languages];
-                        newLangs[activeLanguage].appName = e.target.value;
-                        setLanguages(newLangs);
-                      }}
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
+                    <input type="apk.appNametext" value={} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">关键词 (1-5个)</label>
-                    <div className="border rounded-lg p-2 min-h-[42px] flex flex-wrap gap-1">
-                      {keywordOptions.slice(0, 10).map(kw => (
-                        <label key={kw} className="flex items-center text-xs bg-gray-100 px-2 py-1 rounded cursor-pointer">
-                          <input 
-                            type="checkbox"
-                            checked={languages[activeLanguage].keywords.includes(kw)}
-                            onChange={(e) => {
-                              const newLangs = [...languages];
-                              if (e.target.checked) {
-                                if (newLangs[activeLanguage].keywords.length < 5) {
-                                  newLangs[activeLanguage].keywords.push(kw);
-                                }
-                              } else {
-                                newLangs[activeLanguage].keywords = newLangs[activeLanguage].keywords.filter(k => k !== kw);
-                              }
-                              setLanguages(newLangs);
-                            }}
-                            className="mr-1"
-                          />
-                          {kw}
-                        </label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用包名</label>
+                    <input type="text" value={apk.packageName} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用类型</label>
+                    <input type="text" value={apk.appType} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用版本号 <span className="text-red-500">*</span></label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.versionCode}
+                      onChange={(e) => setFormData({...formData, versionCode: e.target.value})}
+                    >
+                      <option value="">选择版本</option>
+                      <option value="22651">v22651 - 2.26.1.15</option>
+                      <option value="22650">v22650 - 2.26.1.14</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用APK</label>
+                    <input type="text" value={`${apk.appName}.apk`} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用测试PASS报告</label>
+                    <div className="border-2 border-dashed rounded-lg p-3 text-center hover:bg-gray-50 cursor-pointer">
+                      <Upload className="w-6 h-6 mx-auto text-gray-400" />
+                      <p className="text-sm text-gray-500 mt-1">点击上传测试报告</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用分类 <span className="text-red-500">*</span></label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.appCategory}
+                      onChange={(e) => setFormData({...formData, appCategory: e.target.value})}
+                    >
+                      {appCategoryOptions.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
                       ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">一句话描述</label>
-                  <input 
-                    type="text" 
-                    className="w-full border rounded-lg px-3 py-2"
-                    value={languages[activeLanguage].shortDescription}
-                    onChange={(e) => {
-                      const newLangs = [...languages];
-                      newLangs[activeLanguage].shortDescription = e.target.value;
-                      setLanguages(newLangs);
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">产品详情</label>
-                  <textarea 
-                    className="w-full border rounded-lg px-3 py-2 h-24"
-                    value={languages[activeLanguage].productDetails}
-                    onChange={(e) => {
-                      const newLangs = [...languages];
-                      newLangs[activeLanguage].productDetails = e.target.value;
-                      setLanguages(newLangs);
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">更新说明</label>
-                  <textarea 
-                    className="w-full border rounded-lg px-3 py-2 h-20"
-                    value={languages[activeLanguage].updateNotes}
-                    onChange={(e) => {
-                      const newLangs = [...languages];
-                      newLangs[activeLanguage].updateNotes = e.target.value;
-                      setLanguages(newLangs);
-                    }}
-                  />
-                </div>
-
-                {/* 图片上传 */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">应用图标 (1:1, ≥180x180px)</label>
-                    <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
-                      <Upload className="w-6 h-6 mx-auto text-gray-400" />
-                      <div className="text-xs text-gray-500 mt-1">点击上传</div>
-                    </div>
+                    </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">置顶大图 (1080x594px)</label>
-                    <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
-                      <Upload className="w-6 h-6 mx-auto text-gray-400" />
-                      <div className="text-xs text-gray-500 mt-1">点击上传</div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">详情截图 (3-5张)</label>
-                    <div className="border-2 border-dashed rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
-                      <Upload className="w-6 h-6 mx-auto text-gray-400" />
-                      <div className="text-xs text-gray-500 mt-1">点击上传</div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">系统应用</label>
+                    <div className="flex gap-4 mt-2">
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="systemApp" value="yes" checked={formData.systemApp === 'yes'} onChange={(e) => setFormData({...formData, systemApp: e.target.value})} />
+                        是
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="systemApp" value="no" checked={formData.systemApp === 'no'} onChange={(e) => setFormData({...formData, systemApp: e.target.value})} />
+                        否
+                      </label>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* GP上架 */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center gap-4 mb-3">
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        checked={languages[activeLanguage].isGP上架 === true}
-                        onChange={() => {
-                          const newLangs = [...languages];
-                          newLangs[activeLanguage].isGP上架 = true;
-                          setLanguages(newLangs);
-                        }}
-                        className="mr-2" 
-                      />
-                      是GP上架
+              {/* 发布范围 */}
+              <div>
+                <h4 className="font-medium mb-4">发布范围</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发布国家</label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.countryType}
+                      onChange={(e) => setFormData({...formData, countryType: e.target.value})}
+                    >
+                      <option value="all">全部</option>
+                      <option value="include">包含</option>
+                      <option value="exclude">不包含</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.brandType}
+                      onChange={(e) => setFormData({...formData, brandType: e.target.value})}
+                    >
+                      <option value="all">全部</option>
+                      <option value="include">包含</option>
+                      <option value="exclude">不包含</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发布机型</label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.deviceType}
+                      onChange={(e) => setFormData({...formData, deviceType: e.target.value})}
+                    >
+                      <option value="all">全部</option>
+                      <option value="include">包含</option>
+                      <option value="exclude">不包含</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">内测机型</label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.betaDeviceType}
+                      onChange={(e) => setFormData({...formData, betaDeviceType: e.target.value})}
+                    >
+                      <option value="all">全部</option>
+                      <option value="include">包含</option>
+                      <option value="exclude">不包含</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">适用安卓版本</label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.androidVersionType}
+                      onChange={(e) => setFormData({...formData, androidVersionType: e.target.value})}
+                    >
+                      <option value="all">全部</option>
+                      <option value="include">包含</option>
+                      <option value="exclude">不包含</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">适用tOS版本</label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.tosVersionType}
+                      onChange={(e) => setFormData({...formData, tosVersionType: e.target.value})}
+                    >
+                      <option value="all">全部</option>
+                      <option value="include">包含</option>
+                      <option value="exclude">不包含</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 过滤印度 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">是否需要过滤印度</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="filterIndia" value="yes" checked={formData.filterIndia === 'yes'} onChange={(e) => setFormData({...formData, filterIndia: e.target.value})} />
+                    是
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="filterIndia" value="no" checked={formData.filterIndia === 'no'} onChange={(e) => setFormData({...formData, filterIndia: e.target.value})} />
+                    否
+                  </label>
+                </div>
+              </div>
+
+              {/* PA更新 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">是否PA应用更新</label>
+                <div className="flex gap-4 items-center">
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isPAUpdate" value="yes" checked={formData.isPAUpdate === 'yes'} onChange={(e) => setFormData({...formData, isPAUpdate: e.target.value})} />
+                      是
                     </label>
-                    <label className="flex items-center">
-                      <input 
-                        type="radio" 
-                        checked={languages[activeLanguage].isGP上架 === false}
-                        onChange={() => {
-                          const newLangs = [...languages];
-                          newLangs[activeLanguage].isGP上架 = false;
-                          newLangs[activeLanguage].gpLink = '';
-                          setLanguages(newLangs);
-                        }}
-                        className="mr-2" 
-                      />
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isPAUpdate" value="no" checked={formData.isPAUpdate === 'no'} onChange={(e) => setFormData({...formData, isPAUpdate: e.target.value})} />
                       否
                     </label>
                   </div>
-                  {languages[activeLanguage].isGP上架 && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">GP链接</label>
+                  {formData.isPAUpdate === 'yes' && (
+                    <div className="flex gap-4 items-center">
                       <input 
-                        type="text" 
-                        className="w-full border rounded-lg px-3 py-2"
-                        placeholder="https://play.google.com/store/apps/details?id=..."
-                        value={languages[activeLanguage].gpLink}
-                        onChange={(e) => {
-                          const newLangs = [...languages];
-                          newLangs[activeLanguage].gpLink = e.target.value;
-                          setLanguages(newLangs);
-                        }}
+                        type="number" 
+                        placeholder="灰度量级" 
+                        className="border rounded px-3 py-2 w-32"
+                        value={formData.grayScaleLevel}
+                        onChange={(e) => setFormData({...formData, grayScaleLevel: parseInt(e.target.value)})}
+                      />
+                      <span>/天</span>
+                      <input 
+                        type="datetime-local" 
+                        className="border rounded px-3 py-2"
+                        value={formData.effectiveTime}
+                        onChange={(e) => setFormData({...formData, effectiveTime: e.target.value})}
                       />
                     </div>
                   )}
@@ -642,283 +348,86 @@ function ChannelApplyModal({ isOpen, onClose, onSubmit }: ChannelApplyModalProps
             </div>
           )}
 
-          {activeTab === 'paUpdate' && (
+          {activeTab === 'material' && (
             <div className="space-y-4">
-              <div className="border rounded-lg p-4">
-                <label className="flex items-center mb-4">
-                  <input 
-                    type="radio" 
-                    checked={paUpdate.isPAUpdate === true}
-                    onChange={() => setPaUpdate({...paUpdate, isPAUpdate: true})}
-                    className="mr-2" 
-                  />
-                  是PA应用更新
-                </label>
-                <label className="flex items-center mb-4">
-                  <input 
-                    type="radio" 
-                    checked={paUpdate.isPAUpdate === false}
-                    onChange={() => setPaUpdate({...paUpdate, isPAUpdate: false})}
-                    className="mr-2" 
-                  />
-                  否
-                </label>
+              {/* 语言Tab */}
+              <div className="flex border-b">
+                {languageOptions.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setActiveLang(lang.code)}
+                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
 
-                {paUpdate.isPAUpdate && (
-                  <div className="grid grid-cols-2 gap-4 pl-6">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">灰度量级 (1-100000)</label>
-                      <input 
-                        type="number" 
-                        className="w-full border rounded-lg px-3 py-2"
-                        min={1}
-                        max={100000}
-                        value={paUpdate.grayScale}
-                        onChange={(e) => setPaUpdate({...paUpdate, grayScale: parseInt(e.target.value) || 0})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">生效时间</label>
-                      <input 
-                        type="datetime-local" 
-                        className="w-full border rounded-lg px-3 py-2"
-                        value={paUpdate.effectiveTime}
-                        onChange={(e) => setPaUpdate({...paUpdate, effectiveTime: e.target.value})}
-                      />
-                    </div>
+              {/* 物料表单 */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
+                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入应用名称" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">一句话描述</label>
+                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入一句话描述" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">产品详情</label>
+                  <textarea className="w-full border rounded px-3 py-2" rows={4} placeholder="请输入产品详情" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">更新说明</label>
+                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入更新说明" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
+                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入关键词" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">应用图标</label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-500 mt-1">点击上传图标 (jpg/png, 尺寸>=180*180px)</p>
                   </div>
-                )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图</label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-500 mt-1">点击上传置顶大图 (1080*594px, <=lt;=2MB)</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">详情截图 (3-5张)</label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">是否GP上架</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isGP" value="yes" />
+                      是
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isGP" value="no" defaultChecked />
+                      否
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-4 border-t">
-          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-            取消
-          </button>
-          <button onClick={handleSubmit} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            确认提交
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ==================== 添加应用Modal ====================
-interface AddAppModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAdd: (apps: string[]) => void;
-}
-
-function AddAppModal({ isOpen, onClose, onAdd }: AddAppModalProps) {
-  const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<string[]>([]);
-
-  const availableApps = [
-    { id: 'app1', icon: '🎵', name: 'Spotify', package: 'com.spotify.music', type: 'Music' },
-    { id: 'app2', icon: '💬', name: 'Telegram', package: 'org.telegram.messenger', type: 'Social' },
-    { id: 'app3', icon: '📸', name: 'Instagram', package: 'com.instagram.android', type: 'Social' },
-    { id: 'app4', icon: '📺', name: 'YouTube', package: 'com.google.android.youtube', type: 'Video' },
-    { id: 'app5', icon: '🐦', name: 'Twitter', package: 'com.twitter.android', type: 'Social' },
-    { id: 'app6', icon: '📘', name: 'Facebook', package: 'com.facebook.katana', type: 'Social' },
-  ];
-
-  const filteredApps = availableApps.filter(app => 
-    app.name.toLowerCase().includes(search.toLowerCase()) ||
-    app.package.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const toggleSelect = (id: string) => {
-    setSelected(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold">添加应用</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4">
-          <div className="relative mb-4">
-            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="搜索应用名称或包名..."
-              className="w-full pl-10 pr-4 py-2 border rounded-lg"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          <div className="max-h-64 overflow-y-auto space-y-2">
-            {filteredApps.map(app => (
-              <div 
-                key={app.id}
-                onClick={() => toggleSelect(app.id)}
-                className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border ${selected.includes(app.id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
-              >
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-xl">
-                  {app.icon}
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">{app.name}</div>
-                  <div className="text-xs text-gray-500">{app.package}</div>
-                </div>
-                <div className="text-xs text-gray-400">{app.type}</div>
-                {selected.includes(app.id) && (
-                  <CheckCircle className="w-5 h-5 text-blue-500" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 p-4 border-t">
-          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-50">
-            取消
-          </button>
-          <button 
-            onClick={() => { onAdd(selected); onClose(); }}
-            disabled={selected.length === 0}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
-          >
-            确认添加 ({selected.length})
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ==================== 节点详情Modal ====================
-interface NodeDetailModalProps {
-  node: { name: string; status: string; operator?: string; rejectReason?: string } | null;
-  onClose: () => void;
-  onApprove: () => void;
-  onReject: (reason: string) => void;
-}
-
-function NodeDetailModal({ node, onClose, onApprove, onReject }: NodeDetailModalProps) {
-  const [rejectReason, setRejectReason] = useState('');
-  const [showRejectInput, setShowRejectInput] = useState(false);
-
-  if (!node) return null;
-
-  const isCompleted = node.status === 'completed';
-  const isRejected = node.status === 'rejected';
-  const isProcessing = node.status === 'processing';
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold">{node.name}</h3>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          {/* 状态显示 */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">状态:</span>
-            <span className={`px-2 py-1 text-sm rounded-full ${
-              isCompleted ? 'bg-green-100 text-green-700' :
-              isRejected ? 'bg-red-100 text-red-700' :
-              'bg-blue-100 text-blue-700'
-            }`}>
-              {isCompleted ? '已完成' : isRejected ? '已拒绝' : '进行中'}
-            </span>
-          </div>
-
-          {/* 拒绝原因 */}
-          {(isRejected || node.rejectReason) && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="text-sm font-medium text-red-700">拒绝原因:</div>
-              <div className="text-sm text-red-600">{node.rejectReason || rejectReason}</div>
-            </div>
-          )}
-
-          {/* 详情内容 */}
-          <div className="border rounded-lg p-4">
-            <div className="text-sm text-gray-500 mb-2">详细信息</div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">应用名称</span>
-                <span className="text-sm font-medium">Spotify</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">应用包名</span>
-                <span className="text-sm font-medium">com.spotify.music</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">版本号</span>
-                <span className="text-sm font-medium">v22651</span>
-              </div>
-              {node.operator && (
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-500">操作人</span>
-                  <span className="text-sm font-medium">{node.operator}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 审核操作 (仅进行中节点) */}
-          {isProcessing && (
-            <div className="space-y-3">
-              {!showRejectInput ? (
-                <div className="flex gap-3">
-                  <button 
-                    onClick={onApprove}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    通过
-                  </button>
-                  <button 
-                    onClick={() => setShowRejectInput(true)}
-                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    拒绝
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <textarea
-                    placeholder="请输入拒绝原因..."
-                    className="w-full border rounded-lg px-3 py-2 h-20"
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                  />
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => { onReject(rejectReason); setShowRejectInput(false); }}
-                      disabled={!rejectReason.trim()}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300"
-                    >
-                      确认拒绝
-                    </button>
-                    <button 
-                      onClick={() => setShowRejectInput(false)}
-                      className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                    >
-                      取消
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
+          <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认</button>
         </div>
       </div>
     </div>
@@ -934,8 +443,7 @@ function HomePage() {
   const [filterShuttle, setFilterShuttle] = useState('');
   const [filterTos, setFilterTos] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [showApplyModal, setShowApplyModal] = useState(false);
-  const [showAddAppModal, setShowAddAppModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [kanbanView, setKanbanView] = useState<'shuttle' | 'product' | 'status'>('shuttle');
 
   // 看板数据 - 班车视角
@@ -970,16 +478,6 @@ function HomePage() {
     return matchKeyword && matchShuttle && matchTos && matchStatus;
   });
 
-  const handleApplySubmit = (data: any) => {
-    console.log('提交申请数据:', data);
-    alert('申请已提交！');
-  };
-
-  const handleAddApps = (appIds: string[]) => {
-    console.log('添加应用:', appIds);
-    alert(`已添加 ${appIds.length} 个应用`);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* 顶部导航 */}
@@ -1006,7 +504,7 @@ function HomePage() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900">独立三方应用发布流程申请列表</h2>
             <button 
-              onClick={() => setShowApplyModal(true)}
+              onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
@@ -1143,7 +641,7 @@ function HomePage() {
                   </div>
                 )}
                 <button 
-                  onClick={() => navigate(`/application/${todo.id.split('-')[0]}?appId=${todo.appId}&node=${todo.currentNode}`)}
+                  onClick={() => navigate(`/apk/${todo.appId}?node=${todo.currentNode}`)}
                   className="mt-3 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                 >
                   去处理
@@ -1233,17 +731,18 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Modals */}
-      <ChannelApplyModal 
-        isOpen={showApplyModal} 
-        onClose={() => setShowApplyModal(false)} 
-        onSubmit={handleApplySubmit}
-      />
-      <AddAppModal 
-        isOpen={showAddAppModal}
-        onClose={() => setShowAddAppModal(false)}
-        onAdd={handleAddApps}
-      />
+      {/* 申请Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">申请独立三方应用发布流程</h3>
+            <p className="text-gray-500">申请功能开发中...</p>
+            <div className="mt-4 flex justify-end">
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">关闭</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1252,13 +751,22 @@ function HomePage() {
 function ApplicationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [showAddAppModal, setShowAddAppModal] = useState(false);
   const app = mockApplications.find(a => a.id === id) || mockApplications[0];
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
-  const handleAddApps = (appIds: string[]) => {
-    console.log('添加应用:', appIds);
-    alert(`已添加 ${appIds.length} 个应用到流程单`);
-  };
+  // 搜索过滤
+  const filteredApps = app.apps.filter(apk => 
+    searchKeyword === '' ||
+    apk.appName.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+    apk.packageName.toLowerCase().includes(searchKeyword.toLowerCase())
+  );
+
+  // 分页
+  const totalPages = Math.ceil(filteredApps.length / pageSize);
+  const paginatedApps = filteredApps.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1306,16 +814,27 @@ function ApplicationDetailPage() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">应用列表</h2>
-            <button 
-              onClick={() => setShowAddAppModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
+            <button onClick={() => setShowAddModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
               + 添加应用
             </button>
           </div>
+
+          {/* 搜索框 */}
+          <div className="mb-4">
+            <div className="relative max-w-xs">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="搜索应用名称、包名..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+                value={searchKeyword}
+                onChange={(e) => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+              />
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {app.apps.map((apk) => (
+            {paginatedApps.map((apk) => (
               <div key={apk.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-2xl">
@@ -1364,15 +883,62 @@ function ApplicationDetailPage() {
               </div>
             ))}
           </div>
+
+          {/* 分页 */}
+          {totalPages > 1 && (
+            <div className="mt-4 flex justify-center gap-2">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                上一页
+              </button>
+              <span className="px-3 py-1">
+                {currentPage} / {totalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                下一页
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* 添加应用Modal */}
-      <AddAppModal 
-        isOpen={showAddAppModal}
-        onClose={() => setShowAddAppModal(false)}
-        onAdd={handleAddApps}
-      />
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+            <h3 className="text-lg font-semibold mb-4">添加应用到当前班车</h3>
+            <div className="mb-4">
+              <input
+                type="text"
+                placeholder="搜索可添加的应用..."
+                className="w-full px-4 py-2 border rounded-lg"
+              />
+            </div>
+            <div className="max-h-64 overflow-y-auto space-y-2 mb-4">
+              {['WhatsApp', 'Facebook', 'YouTube', 'Twitter', 'Snapchat'].map(name => (
+                <div key={name} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">📱</div>
+                  <div>
+                    <div className="font-medium">{name}</div>
+                    <div className="text-xs text-gray-500">com.example.{name.toLowerCase()}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-50">取消</button>
+              <button onClick={() => setShowAddModal(false)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认添加</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1381,17 +947,17 @@ function ApplicationDetailPage() {
 function APKDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [selectedNode, setSelectedNode] = useState<{ name: string; status: string; operator?: string; rejectReason?: string } | null>(null);
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'history'>('pipeline');
+  const [showNodeModal, setShowNodeModal] = useState(false);
+  const [selectedNodeIndex, setSelectedNodeIndex] = useState(0);
   
   // 找到对应的APK
   let targetAPK: APKItem | undefined;
-  let parentApp: Application | undefined;
   
   for (const app of mockApplications) {
     const found = app.apps.find(a => a.id === id);
     if (found) {
       targetAPK = found;
-      parentApp = app;
       break;
     }
   }
@@ -1400,22 +966,25 @@ function APKDetailPage() {
 
   // 找到当前进行中的节点
   const currentNodeIndex = apk.nodes.findIndex(n => n.status === 'processing' || n.status === 'rejected');
-  const currentNode = apk.nodes[currentNodeIndex] || apk.nodes[0];
+  
+  // 模拟历史操作记录
+  const historyRecords = [
+    { time: '2026-03-01 16:00:00', operator: '赵六', action: '完成', detail: '灰度监控节点已完成' },
+    { time: '2026-03-01 15:00:00', operator: '赵六', action: '完成', detail: '业务内测节点已完成' },
+    { time: '2026-03-01 14:00:00', operator: '赵六', action: '完成', detail: '应用上架节点已完成' },
+    { time: '2026-03-01 13:00:00', operator: '王五', action: '完成', detail: '物料审核节点已完成' },
+    { time: '2026-03-01 12:00:00', operator: '张三', action: '完成', detail: '物料上传节点已完成' },
+    { time: '2026-03-01 11:00:00', operator: '李四', action: '完成', detail: '通道发布审核节点已完成' },
+    { time: '2026-03-01 10:00:00', operator: '张三', action: '提交', detail: '通道发布申请节点已提交' },
+  ];
 
-  const handleNodeClick = (node: any) => {
-    setSelectedNode(node);
+  const handleNodeClick = (index: number) => {
+    setSelectedNodeIndex(index);
+    setShowNodeModal(true);
   };
 
-  const handleApprove = () => {
-    console.log('审核通过');
-    setSelectedNode(null);
-    alert('审核已通过！');
-  };
-
-  const handleReject = (reason: string) => {
-    console.log('审核拒绝:', reason);
-    setSelectedNode(null);
-    alert('已拒绝，理由: ' + reason);
+  const handleSaveNode = (data: any) => {
+    console.log('保存节点数据:', data);
   };
 
   return (
@@ -1466,50 +1035,98 @@ function APKDetailPage() {
           </div>
         </div>
 
-        {/* 流水线 - 可点击 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">发布流程</h2>
-          <div className="flex items-center justify-between overflow-x-auto pb-4">
-            {apk.nodes.map((node, idx) => (
-              <div key={idx} className="flex items-center flex-shrink-0">
-                <div 
-                  className="flex flex-col items-center cursor-pointer hover:opacity-80"
-                  onClick={() => handleNodeClick(node)}
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${nodeStatusColors[node.status]} ${node.status === 'processing' ? 'ring-4 ring-blue-200' : ''}`}>
-                    {node.status === 'completed' ? <CheckCircle className="w-6 h-6" /> :
-                     node.status === 'rejected' ? <XCircle className="w-6 h-6" /> :
-                     <Clock className="w-6 h-6" />}
-                  </div>
-                  <div className="mt-2 text-xs text-center max-w-[80px]">{node.name}</div>
-                  {node.operator && (
-                    <div className="text-xs text-gray-500">{node.operator}</div>
-                  )}
-                </div>
-                {idx < apk.nodes.length - 1 && (
-                  <div className={`w-8 h-0.5 ${idx < currentNodeIndex ? 'bg-green-500' : 'bg-gray-300'}`} />
-                )}
-              </div>
-            ))}
+        {/* Tab切换 */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="flex border-b">
+            <button
+              onClick={() => setActiveTab('pipeline')}
+              className={`px-6 py-3 -mb-px ${activeTab === 'pipeline' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+            >
+              独立发布流程
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`px-6 py-3 -mb-px ${activeTab === 'history' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+            >
+              历史操作记录
+            </button>
           </div>
-        </div>
 
-        {/* 提示信息 */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 text-blue-700">
-            <AlertCircle className="w-5 h-5" />
-            <span>点击流程节点可查看详情并进行操作</span>
-          </div>
+          {/* 流水线 */}
+          {activeTab === 'pipeline' && (
+            <div className="p-6">
+              <div className="flex items-center justify-between overflow-x-auto pb-4">
+                {apk.nodes.map((node, idx) => (
+                  <div key={idx} className="flex items-center flex-shrink-0">
+                    <div 
+                      className="flex flex-col items-center cursor-pointer hover:opacity-80"
+                      onClick={() => handleNodeClick(idx)}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white ${nodeStatusColors[node.status]}`}>
+                        {node.status === 'completed' ? <CheckCircle className="w-6 h-6" /> :
+                        node.status === 'rejected' ? <XCircle className="w-6 h-6" /> :
+                        node.status === 'processing' ? <Clock className="w-6 h-6" /> :
+                        <Clock className="w-6 h-6" />}
+                      </div>
+                      <div className="mt-2 text-xs text-center max-w-[80px]">{node.name}</div>
+                      {node.operator && (
+                        <div className="text-xs text-gray-500">{node.operator}</div>
+                      )}
+                    </div>
+                    {idx < apk.nodes.length - 1 && (
+                      <div className={`w-8 h-0.5 ${idx < currentNodeIndex ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <AlertCircle className="w-5 h-5" />
+                  <span>点击流程节点可查看详情并进行操作</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 历史记录 */}
+          {activeTab === 'history' && (
+            <div className="p-6">
+              <table className="min-w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">操作时间</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">操作人</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">操作动作</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">操作详情</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {historyRecords.map((record, idx) => (
+                    <tr key={idx}>
+                      <td className="px-4 py-3 text-sm text-gray-500">{record.time}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{record.operator}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">{record.action}</span>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{record.detail}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 节点详情Modal */}
-      <NodeDetailModal 
-        node={selectedNode}
-        onClose={() => setSelectedNode(null)}
-        onApprove={handleApprove}
-        onReject={handleReject}
-      />
+      {/* 节点Modal - 通道发布申请 */}
+      {showNodeModal && selectedNodeIndex === 0 && (
+        <ChannelApplyModal 
+          isOpen={showNodeModal} 
+          onClose={() => setShowNodeModal(false)} 
+          apk={apk}
+          onSave={handleSaveNode}
+        />
+      )}
     </div>
   );
 }
