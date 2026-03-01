@@ -33,6 +33,28 @@ function HomePage() {
   const [filterTos, setFilterTos] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [kanbanView, setKanbanView] = useState<'shuttle' | 'product' | 'status'>('shuttle');
+
+  // 看板数据 - 班车视角
+  const shuttleKanban = [
+    { shuttleName: '班车20260301', month: '2026年3月', products: ['Spotify', 'Telegram', 'Instagram'], count: 3 },
+    { shuttleName: '班车20260228', month: '2026年2月', products: ['WhatsApp', 'Facebook'], count: 2 },
+    { shuttleName: '班车20260221', month: '2026年2月', products: ['YouTube', 'Twitter', 'Snapchat', 'LinkedIn'], count: 4 },
+  ];
+
+  // 看板数据 - 产品视角
+  const productKanban = [
+    { productName: 'Spotify', releaseCount: 12 },
+    { productName: 'Telegram', releaseCount: 8 },
+    { productName: 'Instagram', releaseCount: 6 },
+  ];
+
+  // 看板数据 - 状态视角
+  const statusKanban = {
+    processing: 3,
+    completed: 15,
+    totalTasks: 28,
+  };
 
   // 筛选过滤
   const filteredApps = applications.filter(app => {
@@ -221,10 +243,80 @@ function HomePage() {
           )}
         </div>
 
-        {/* 看板区域 (占位) */}
+        {/* 看板区域 */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">看板</h2>
-          <div className="text-center py-8 text-gray-500">看板功能开发中...</div>
+          
+          {/* 看板Tab切换 */}
+          <div className="flex border-b mb-6">
+            <button
+              onClick={() => setKanbanView('shuttle')}
+              className={`px-4 py-2 -mb-px ${kanbanView === 'shuttle' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+            >
+              班车视角
+            </button>
+            <button
+              onClick={() => setKanbanView('product')}
+              className={`px-4 py-2 -mb-px ${kanbanView === 'product' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+            >
+              产品视角
+            </button>
+            <button
+              onClick={() => setKanbanView('status')}
+              className={`px-4 py-2 -mb-px ${kanbanView === 'status' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+            >
+              状态视角
+            </button>
+          </div>
+
+          {/* 班车视角 */}
+          {kanbanView === 'shuttle' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {shuttleKanban.map((item, idx) => (
+                <div key={idx} className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="font-medium text-gray-900 mb-2">{item.shuttleName}</div>
+                  <div className="text-sm text-gray-500 mb-2">{item.month}</div>
+                  <div className="text-sm">
+                    覆盖: {item.products.join('、')} 等{item.count}个产品
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 产品视角 */}
+          {kanbanView === 'product' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {productKanban.map((item, idx) => (
+                <div key={idx} className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="font-medium text-gray-900 mb-2">{item.productName}</div>
+                  <div className="text-2xl font-bold text-blue-600 mb-1">{item.releaseCount}</div>
+                  <div className="text-sm text-gray-500">发布次数</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 状态视角 */}
+          {kanbanView === 'status' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="border rounded-lg p-4 bg-blue-50">
+                <div className="text-3xl font-bold text-blue-600">{statusKanban.processing}</div>
+                <div className="text-sm text-gray-600">进行中</div>
+                <div className="text-xs text-gray-500 mt-2">个产品</div>
+              </div>
+              <div className="border rounded-lg p-4 bg-green-50">
+                <div className="text-3xl font-bold text-green-600">{statusKanban.completed}</div>
+                <div className="text-sm text-gray-600">已完成</div>
+                <div className="text-xs text-gray-500 mt-2">个产品</div>
+              </div>
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <div className="text-3xl font-bold text-gray-600">{statusKanban.totalTasks}</div>
+                <div className="text-sm text-gray-600">升级任务</div>
+                <div className="text-xs text-gray-500 mt-2">已完成</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
