@@ -61,6 +61,565 @@ const brandOptions = ['Tecno', 'Infinix', 'itel'];
 // 机型选项
 const deviceOptions = ['X6841_H6941', 'X6858_H8917', 'KO5_H8925', 'Pova'];
 
+// ==================== 通道发布审核Modal ====================
+function ChannelAuditModal({
+  isOpen,
+  onClose,
+  apk,
+  onPass,
+  onReject
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  apk: APKItem;
+  onPass: () => void;
+  onReject: (reason: string) => void;
+}) {
+  const [auditResult, setAuditResult] = useState<'pass' | 'reject' | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    if (auditResult === 'pass') {
+      onPass();
+    } else if (auditResult === 'reject' && rejectReason) {
+      onReject(rejectReason);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[1]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* 审核结果 - 固定在最上方 */}
+        <div className="px-6 py-4 bg-gray-50 border-b">
+          <h4 className="font-medium mb-3">审核结果 <span className="text-red-500">*</span></h4>
+          <div className="flex gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="auditResult"
+                checked={auditResult === 'pass'}
+                onChange={() => setAuditResult('pass')}
+                className="w-4 h-4 text-green-600"
+              />
+              <span className="text-green-700 font-medium">通过</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="auditResult"
+                checked={auditResult === 'reject'}
+                onChange={() => setAuditResult('reject')}
+                className="w-4 h-4 text-red-600"
+              />
+              <span className="text-red-700 font-medium">不通过</span>
+            </label>
+          </div>
+          {auditResult === 'reject' && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
+              <textarea
+                className="w-full border rounded-lg px-3 py-2"
+                rows={3}
+                placeholder="请填写拒绝原因"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 通道发布详情 - 只读 */}
+        <div className="p-6 overflow-y-auto max-h-[40vh]">
+          <h4 className="font-medium mb-4 flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            通道发布详情
+          </h4>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">应用名称</div>
+              <div className="font-medium">{apk.appName}</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">应用包名</div>
+              <div className="font-medium">{apk.packageName}</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">应用类型</div>
+              <div className="font-medium">{apk.appType}</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">版本号</div>
+              <div className="font-medium">v{apk.versionCode}</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">申请人</div>
+              <div className="font-medium">张三</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">申请时间</div>
+              <div className="font-medium">2026-03-01 10:00:00</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
+          <button
+            onClick={handleSubmit}
+            disabled={!auditResult || (auditResult === 'reject' && !rejectReason)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            确认
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== 物料上传Modal ====================
+function MaterialUploadModal({
+  isOpen,
+  onClose,
+  apk,
+  onSave
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  apk: APKItem;
+  onSave: (data: any) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
+  const [activeLang, setActiveLang] = useState('en');
+  const [formData, setFormData] = useState({
+    versionCode: '',
+    appCategory: 'Social',
+    systemApp: 'no',
+    filterIndia: 'no',
+    countryType: 'all',
+    countryList: [] as string[],
+    brandType: 'all',
+    brandList: [] as string[],
+    deviceType: 'all',
+    deviceList: [] as string[],
+    betaDeviceType: 'all',
+    betaDeviceList: [] as string[],
+    androidVersionType: 'all',
+    androidVersionList: [] as string[],
+    tosVersionType: 'all',
+    tosVersionList: [] as string[],
+    isPAUpdate: 'yes',
+    grayScaleLevel: 1000,
+    effectiveTime: '',
+    materials: {
+      en: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      zh: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      th: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      id: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      pt: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+    }
+  });
+
+  if (!isOpen) return null;
+
+  const handleSave = () => {
+    onSave(formData);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[2]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tab切换 */}
+        <div className="px-6 py-3 border-b bg-gray-50">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              基础信息
+            </button>
+            <button
+              onClick={() => setActiveTab('material')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              所需物料 <span className="text-red-500">*</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[50vh]">
+          {activeTab === 'basic' && (
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-medium mb-4 flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  应用基本信息
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
+                    <input type="text" value={apk.appName} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用包名</label>
+                    <input type="text" value={apk.packageName} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用类型</label>
+                    <input type="text" value={apk.appType} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用版本号 <span className="text-red-500">*</span></label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.versionCode}
+                      onChange={(e) => setFormData({...formData, versionCode: e.target.value})}
+                    >
+                      <option value="">选择版本</option>
+                      <option value="22651">v22651 - 2.26.1.15</option>
+                      <option value="22650">v22650 - 2.26.1.14</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用分类 <span className="text-red-500">*</span></label>
+                    <select 
+                      className="w-full border rounded px-3 py-2"
+                      value={formData.appCategory}
+                      onChange={(e) => setFormData({...formData, appCategory: e.target.value})}
+                    >
+                      {appCategoryOptions.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">系统应用</label>
+                    <div className="flex gap-4 mt-2">
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="systemApp" value="yes" checked={formData.systemApp === 'yes'} onChange={(e) => setFormData({...formData, systemApp: e.target.value})} />
+                        是
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input type="radio" name="systemApp" value="no" checked={formData.systemApp === 'no'} onChange={(e) => setFormData({...formData, systemApp: e.target.value})} />
+                        否
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'material' && (
+            <div className="space-y-4">
+              <div className="flex border-b">
+                {languageOptions.map(lang => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setActiveLang(lang.code)}
+                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                  >
+                    {lang.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">应用名称 <span className="text-red-500">*</span></label>
+                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入应用名称" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">一句话描述 <span className="text-red-500">*</span></label>
+                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入一句话描述" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">产品详情 <span className="text-red-500">*</span></label>
+                  <textarea className="w-full border rounded px-3 py-2" rows={4} placeholder="请输入产品详情" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">更新说明</label>
+                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入更新说明" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">关键词 <span className="text-red-500">*</span> (1-5个)</label>
+                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入关键词，用逗号分隔" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">应用图标 <span className="text-red-500">*</span> (≥180x180px)</label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-500 mt-1">点击上传图标</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图 <span className="text-red-500">*</span> (1080x594px)</label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-500 mt-1">点击上传置顶大图</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">详情截图 <span className="text-red-500">*</span> (3-5张)</label>
+                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
+                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">是否GP上架</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isGP" value="yes" />
+                      是
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isGP" value="no" defaultChecked />
+                      否
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
+          <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">确认</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== 物料审核Modal ====================
+function MaterialAuditModal({
+  isOpen,
+  onClose,
+  apk,
+  onOperatorPass,
+  onOperatorReject,
+  onBossPass,
+  onBossReject
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  apk: APKItem;
+  onOperatorPass: () => void;
+  onOperatorReject: (reason: string) => void;
+  onBossPass: () => void;
+  onBossReject: (reason: string) => void;
+}) {
+  const [step, setStep] = useState<'operator' | 'boss'>('operator');
+  const [operatorResult, setOperatorResult] = useState<'pass' | 'reject' | null>(null);
+  const [bossResult, setBossResult] = useState<'pass' | 'reject' | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  if (!isOpen) return null;
+
+  const handleOperatorSubmit = () => {
+    if (operatorResult === 'pass') {
+      setStep('boss');
+    } else if (operatorResult === 'reject' && rejectReason) {
+      onOperatorReject(rejectReason);
+    }
+  };
+
+  const handleBossSubmit = () => {
+    if (bossResult === 'pass') {
+      onBossPass();
+    } else if (bossResult === 'reject' && rejectReason) {
+      onBossReject(rejectReason);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[3]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Step indicator */}
+        <div className="px-6 py-3 bg-gray-50 border-b">
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-2 ${step === 'operator' ? 'text-blue-600 font-medium' : 'text-green-600'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'operator' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'}`}>
+                {step === 'boss' ? '✓' : '1'}
+              </div>
+              运营人员审核
+            </div>
+            <div className="flex-1 h-0.5 bg-gray-300" />
+            <div className={`flex items-center gap-2 ${step === 'boss' ? 'text-blue-600 font-medium' : step === 'operator' ? 'text-gray-400' : 'text-green-600'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'boss' ? 'bg-blue-600 text-white' : step === 'operator' ? 'bg-gray-300 text-gray-500' : 'bg-green-600 text-white'}`}>
+                {step === 'operator' ? '2' : '✓'}
+              </div>
+              老板审核
+            </div>
+          </div>
+        </div>
+
+        {/* 审核表单 */}
+        {step === 'operator' && (
+          <>
+            <div className="px-6 py-4 border-b">
+              <h4 className="font-medium mb-3">运营人员审核结果 <span className="text-red-500">*</span></h4>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="operatorResult"
+                    checked={operatorResult === 'pass'}
+                    onChange={() => setOperatorResult('pass')}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <span className="text-green-700 font-medium">通过</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="operatorResult"
+                    checked={operatorResult === 'reject'}
+                    onChange={() => setOperatorResult('reject')}
+                    className="w-4 h-4 text-red-600"
+                  />
+                  <span className="text-red-700 font-medium">不通过</span>
+                </label>
+              </div>
+              {operatorResult === 'reject' && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
+                  <textarea
+                    className="w-full border rounded-lg px-3 py-2"
+                    rows={3}
+                    placeholder="请填写拒绝原因"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[30vh]">
+              <h4 className="font-medium mb-4">物料上传详情 (只读)</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="p-3 bg-gray-50 rounded">
+                  <div className="text-gray-500">应用名称</div>
+                  <div className="font-medium">{apk.appName}</div>
+                </div>
+                <div className="p-3 bg-gray-50 rounded">
+                  <div className="text-gray-500">应用包名</div>
+                  <div className="font-medium">{apk.packageName}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+              <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
+              <button
+                onClick={handleOperatorSubmit}
+                disabled={!operatorResult || (operatorResult === 'reject' && !rejectReason)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 'boss' && (
+          <>
+            <div className="px-6 py-4 border-b">
+              <h4 className="font-medium mb-3">老板审核结果 <span className="text-red-500">*</span></h4>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="bossResult"
+                    checked={bossResult === 'pass'}
+                    onChange={() => setBossResult('pass')}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <span className="text-green-700 font-medium">通过</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="bossResult"
+                    checked={bossResult === 'reject'}
+                    onChange={() => setBossResult('reject')}
+                    className="w-4 h-4 text-red-600"
+                  />
+                  <span className="text-red-700 font-medium">不通过</span>
+                </label>
+              </div>
+              {bossResult === 'reject' && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
+                  <textarea
+                    className="w-full border rounded-lg px-3 py-2"
+                    rows={3}
+                    placeholder="请填写拒绝原因"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+              <button onClick={() => setStep('operator')} className="px-4 py-2 border rounded-lg hover:bg-gray-100">上一步</button>
+              <button
+                onClick={handleBossSubmit}
+                disabled={!bossResult || (bossResult === 'reject' && !rejectReason)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ==================== 通道发布申请Modal ====================
 function ChannelApplyModal({ 
   isOpen, 
@@ -156,7 +715,7 @@ function ChannelApplyModal({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">应用名称</label>
-                    <input type="apk.appNametext" value={} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                    <input type="text" value={apk.appName} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">应用包名</label>
@@ -389,14 +948,14 @@ function ChannelApplyModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">应用图标</label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传图标 (jpg/png, 尺寸>=180*180px)</p>
+                    <p className="text-sm text-gray-500 mt-1">点击上传图标 (jpg/png, 尺寸≥180*180px)</p>
                   </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图</label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传置顶大图 (1080*594px, <=lt;=2MB)</p>
+                    <p className="text-sm text-gray-500 mt-1">点击上传置顶大图 (1080*594px, ≤2MB)</p>
                   </div>
                 </div>
                 <div>
@@ -1118,14 +1677,81 @@ function APKDetailPage() {
         </div>
       </div>
 
-      {/* 节点Modal - 通道发布申请 */}
-      {showNodeModal && selectedNodeIndex === 0 && (
+      {/* 节点Modal - 根据节点类型显示 */}
+      {showNodeModal && selectedNodeIndex === 0 && apk.nodes[0].status !== 'completed' && (
         <ChannelApplyModal 
           isOpen={showNodeModal} 
           onClose={() => setShowNodeModal(false)} 
           apk={apk}
           onSave={handleSaveNode}
         />
+      )}
+
+      {/* 节点Modal - 通道发布审核 */}
+      {showNodeModal && selectedNodeIndex === 1 && apk.nodes[1].status !== 'completed' && (
+        <ChannelAuditModal
+          isOpen={showNodeModal}
+          onClose={() => setShowNodeModal(false)}
+          apk={apk}
+          onPass={() => { console.log('审核通过'); setShowNodeModal(false); }}
+          onReject={(reason) => { console.log('审核拒绝:', reason); setShowNodeModal(false); }}
+        />
+      )}
+
+      {/* 节点Modal - 物料上传 */}
+      {showNodeModal && selectedNodeIndex === 2 && apk.nodes[2].status !== 'completed' && (
+        <MaterialUploadModal
+          isOpen={showNodeModal}
+          onClose={() => setShowNodeModal(false)}
+          apk={apk}
+          onSave={handleSaveNode}
+        />
+      )}
+
+      {/* 节点Modal - 物料审核 */}
+      {showNodeModal && selectedNodeIndex === 3 && apk.nodes[3].status !== 'completed' && (
+        <MaterialAuditModal
+          isOpen={showNodeModal}
+          onClose={() => setShowNodeModal(false)}
+          apk={apk}
+          onOperatorPass={() => { console.log('运营通过'); setShowNodeModal(false); }}
+          onOperatorReject={(reason) => { console.log('运营拒绝:', reason); setShowNodeModal(false); }}
+          onBossPass={() => { console.log('老板通过'); setShowNodeModal(false); }}
+          onBossReject={(reason) => { console.log('老板拒绝:', reason); setShowNodeModal(false); }}
+        />
+      )}
+
+      {/* 节点Modal - 应用上架/业务内测/灰度监控 (只读展示) */}
+      {showNodeModal && selectedNodeIndex >= 4 && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div>
+                <h2 className="text-xl font-semibold">{NODE_NAMES[selectedNodeIndex]}</h2>
+                <p className="text-sm text-gray-500">{apk.appName}</p>
+              </div>
+              <button onClick={() => setShowNodeModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <AlertCircle className="w-5 h-5" />
+                  <span>该节点数据来自第三方平台，仅供查看</span>
+                </div>
+              </div>
+              <div className="text-center text-gray-500 py-8">
+                {selectedNodeIndex === 4 && '应用上架数据展示区'}
+                {selectedNodeIndex === 5 && '业务内测数据展示区'}
+                {selectedNodeIndex === 6 && '灰度监控数据展示区'}
+              </div>
+            </div>
+            <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
+              <button onClick={() => setShowNodeModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-100">关闭</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
