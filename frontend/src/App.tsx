@@ -306,6 +306,7 @@ function MaterialUploadModal({
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
   const [availableLangs, setAvailableLangs] = useState(['en']); // 默认只有英语
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     versionCode: '',
@@ -337,6 +338,37 @@ function MaterialUploadModal({
   });
 
   if (!isOpen) return null;
+
+  // 添加语言
+  const addLanguage = (code: string) => {
+    if (!availableLangs.includes(code)) {
+      setAvailableLangs([...availableLangs, code]);
+      setActiveLang(code);
+    }
+  };
+
+  // 删除语言（英语不可删除）
+  const removeLanguage = (code: string) => {
+    if (code !== 'en' && availableLangs.includes(code)) {
+      const newLangs = availableLangs.filter(l => l !== code);
+      setAvailableLangs(newLangs);
+      if (activeLang === code) {
+        setActiveLang('en');
+      }
+    }
+  };
+
+  // 所有可选语言
+  const allLanguages = [
+    { code: 'zh', name: '中文' },
+    { code: 'th', name: '泰语' },
+    { code: 'id', name: '印尼语' },
+    { code: 'pt', name: '葡萄牙语' },
+    { code: 'ru', name: '俄语' },
+    { code: 'es', name: '西班牙语' },
+    { code: 'ar', name: '阿拉伯语' },
+    { code: 'ko', name: '韩语' },
+  ];
 
   // 验证物料必填字段
   const validateMaterial = () => {
@@ -475,16 +507,50 @@ function MaterialUploadModal({
 
           {activeTab === 'material' && (
             <div className="space-y-4">
-              <div className="flex border-b">
-                {languageOptions.map(lang => (
-                  <button
-                    key={lang.code}
-                    onClick={() => setActiveLang(lang.code)}
-                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
-                  >
-                    {lang.name}
-                  </button>
-                ))}
+              <div className="flex border-b items-center flex-wrap gap-1">
+                {availableLangs.map(code => {
+                  const lang = languageOptions.find(l => l.code === code);
+                  return (
+                    <button
+                      key={code}
+                      onClick={() => setActiveLang(code)}
+                      className={`px-4 py-2 -mb-px flex items-center gap-1 ${activeLang === code ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+                    >
+                      {lang?.name || code}
+                      {code !== 'en' && (
+                        <span 
+                          onClick={(e) => { e.stopPropagation(); removeLanguage(code); }}
+                          className="ml-1 text-red-500 hover:text-red-700 cursor-pointer"
+                        >
+                          ×
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+                {availableLangs.length < allLanguages.length && (
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowLangDropdown(!showLangDropdown)}
+                      className="px-2 py-1 text-blue-500 hover:text-blue-700 text-sm"
+                    >
+                      + 添加语言
+                    </button>
+                    {showLangDropdown && (
+                      <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                        {allLanguages.filter(l => !availableLangs.includes(l.code)).map(lang => (
+                          <button
+                            key={lang.code}
+                            onClick={() => { addLanguage(lang.code); setShowLangDropdown(false); }}
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                          >
+                            {lang.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -830,6 +896,7 @@ function ChannelApplyModal({
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
   const [availableLangs, setAvailableLangs] = useState(['en']); // 默认只有英语
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const [showBrandDropdown, setShowBrandDropdown] = useState(false);
@@ -1335,9 +1402,25 @@ function ChannelApplyModal({
                 {/* 添加语言按钮 */}
                 {availableLangs.length < allLanguages.length && (
                   <div className="relative">
-                    <button className="px-2 py-1 text-blue-500 hover:text-blue-700 text-sm">
+                    <button 
+                      onClick={() => setShowLangDropdown(!showLangDropdown)}
+                      className="px-2 py-1 text-blue-500 hover:text-blue-700 text-sm"
+                    >
                       + 添加语言
                     </button>
+                    {showLangDropdown && (
+                      <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                        {allLanguages.filter(l => !availableLangs.includes(l.code)).map(lang => (
+                          <button
+                            key={lang.code}
+                            onClick={() => { addLanguage(lang.code); setShowLangDropdown(false); }}
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                          >
+                            {lang.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -1600,10 +1683,10 @@ function HomePage() {
       {/* 主要内容 */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* 申请列表区域 */}
-        <div>
+        {/* 班车申请记录 - 白色底 */}
+        <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">独立三方应用发布流程申请列表</h2>
+            <h2 className="text-lg font-semibold text-gray-900">班车申请记录</h2>
             <button 
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
@@ -1614,7 +1697,7 @@ function HomePage() {
           </div>
 
           {/* 筛选搜索栏 */}
-          <div className="bg-white rounded-lg shadow p-4 mb-4">
+          <div className="mb-4">
             <div className="flex flex-wrap gap-4 items-center">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
