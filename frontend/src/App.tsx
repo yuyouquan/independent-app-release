@@ -141,36 +141,136 @@ function ChannelAuditModal({
           )}
         </div>
 
-        {/* 通道发布详情 - 只读 */}
-        <div className="p-6 overflow-y-auto max-h-[40vh]">
+        {/* 通道发布详情 - 只读 - 完整展示 */}
+        <div className="p-6 overflow-y-auto max-h-[50vh]">
           <h4 className="font-medium mb-4 flex items-center gap-2">
             <FileText className="w-4 h-4" />
             通道发布详情
           </h4>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">应用名称</div>
-              <div className="font-medium">{apk.appName}</div>
+          
+          {/* 基础信息 */}
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">基础信息</h5>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">应用名称</div>
+                <div className="font-medium">{apk.appName}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">应用包名</div>
+                <div className="font-medium">{apk.packageName}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">应用类型</div>
+                <div className="font-medium">{apk.appType}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">版本号</div>
+                <div className="font-medium">v{apk.versionCode}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">应用分类</div>
+                <div className="font-medium">Social</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">系统应用</div>
+                <div className="font-medium">否</div>
+              </div>
             </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">应用包名</div>
-              <div className="font-medium">{apk.packageName}</div>
+          </div>
+
+          {/* 发布范围 */}
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">发布范围</h5>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">发布国家</div>
+                <div className="font-medium">全部</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">发布品牌</div>
+                <div className="font-medium">全部</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">发布机型</div>
+                <div className="font-medium">全部</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">内测机型</div>
+                <div className="font-medium">全部</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">适用安卓版本</div>
+                <div className="font-medium">全部</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">适用tOS版本</div>
+                <div className="font-medium">全部</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">过滤印度</div>
+                <div className="font-medium">否</div>
+              </div>
             </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">应用类型</div>
-              <div className="font-medium">{apk.appType}</div>
+          </div>
+
+          {/* PA更新 */}
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">PA更新</h5>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">是否PA更新</div>
+                <div className="font-medium">是</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">灰度量级</div>
+                <div className="font-medium">1000/天</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">生效时间</div>
+                <div className="font-medium">2026-03-02 00:00:00</div>
+              </div>
             </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">版本号</div>
-              <div className="font-medium">v{apk.versionCode}</div>
+          </div>
+
+          {/* 物料信息 */}
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">应用名称</div>
+                <div className="font-medium">Spotify Music</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">一句话描述</div>
+                <div className="font-medium">音乐播放器</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded col-span-2">
+                <div className="text-gray-500">关键词</div>
+                <div className="font-medium">music, streaming, audio</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">是否GP上架</div>
+                <div className="font-medium">是</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">GP链接</div>
+                <div className="font-medium text-blue-600">https://play.google.com/...</div>
+              </div>
             </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">申请人</div>
-              <div className="font-medium">张三</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">申请时间</div>
-              <div className="font-medium">2026-03-01 10:00:00</div>
+          </div>
+
+          {/* 操作信息 */}
+          <div className="mt-4 pt-4 border-t">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">申请人</div>
+                <div className="font-medium">张三</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">申请时间</div>
+                <div className="font-medium">2026-03-01 10:00:00</div>
+              </div>
             </div>
           </div>
         </div>
@@ -205,6 +305,7 @@ function MaterialUploadModal({
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
   const [activeLang, setActiveLang] = useState('en');
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     versionCode: '',
     appCategory: 'Social',
@@ -236,9 +337,43 @@ function MaterialUploadModal({
 
   if (!isOpen) return null;
 
+  // 验证物料必填字段
+  const validateMaterial = () => {
+    const newErrors: Record<string, string> = {};
+    const mat = formData.materials[activeLang as keyof typeof formData.materials];
+    
+    if (!mat.appName.trim()) newErrors.appName = '请输入应用名称';
+    if (!mat.shortDescription.trim()) newErrors.shortDescription = '请输入一句话描述';
+    if (!mat.productDetail.trim()) newErrors.productDetail = '请输入产品详情';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = () => {
+    // 物料Tab需要验证必填字段
+    if (activeTab === 'material') {
+      if (!validateMaterial()) {
+        return; // 验证不通过，不关闭弹窗
+      }
+    }
     onSave(formData);
     onClose();
+  };
+
+  const handleTabChange = (tab: 'basic' | 'material') => {
+    // 切换到物料Tab时先验证基础信息
+    if (activeTab === 'basic' && tab === 'material') {
+      const newErrors: Record<string, string> = {};
+      if (!formData.versionCode) newErrors.versionCode = '请选择应用版本号';
+      if (!formData.appCategory) newErrors.appCategory = '请选择应用分类';
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        return;
+      }
+    }
+    setActiveTab(tab);
+    setErrors({});
   };
 
   return (
@@ -259,16 +394,16 @@ function MaterialUploadModal({
         <div className="px-6 py-3 border-b bg-gray-50">
           <div className="flex gap-4">
             <button
-              onClick={() => setActiveTab('basic')}
+              onClick={() => handleTabChange('basic')}
               className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
             >
-              基础信息
+              基础信息 <span className="text-red-500 ml-1">*</span>
             </button>
             <button
-              onClick={() => setActiveTab('material')}
+              onClick={() => handleTabChange('material')}
               className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
             >
-              所需物料 <span className="text-red-500">*</span>
+              所需物料 <span className="text-red-500 ml-1">*</span>
             </button>
           </div>
         </div>
@@ -344,7 +479,7 @@ function MaterialUploadModal({
                   <button
                     key={lang.code}
                     onClick={() => setActiveLang(lang.code)}
-                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
+                    className={`px-4 py-2 -mb-px ${activeLang === lang.code ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
                   >
                     {lang.name}
                   </button>
@@ -354,15 +489,30 @@ function MaterialUploadModal({
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">应用名称 <span className="text-red-500">*</span></label>
-                  <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入应用名称" />
+                  <input 
+                    type="text" 
+                    className={`w-full border rounded px-3 py-2 ${errors.appName ? 'border-red-500' : ''}`} 
+                    placeholder="请输入应用名称" 
+                  />
+                  {errors.appName && <p className="text-red-500 text-xs mt-1">{errors.appName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">一句话描述 <span className="text-red-500">*</span></label>
-                  <textarea className="w-full border rounded px-3 py-2" rows={2} placeholder="请输入一句话描述" />
+                  <textarea 
+                    className={`w-full border rounded px-3 py-2 ${errors.shortDescription ? 'border-red-500' : ''}`} 
+                    rows={2} 
+                    placeholder="请输入一句话描述" 
+                  />
+                  {errors.shortDescription && <p className="text-red-500 text-xs mt-1">{errors.shortDescription}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">产品详情 <span className="text-red-500">*</span></label>
-                  <textarea className="w-full border rounded px-3 py-2" rows={4} placeholder="请输入产品详情" />
+                  <textarea 
+                    className={`w-full border rounded px-3 py-2 ${errors.productDetail ? 'border-red-500' : ''}`} 
+                    rows={4} 
+                    placeholder="请输入产品详情" 
+                  />
+                  {errors.productDetail && <p className="text-red-500 text-xs mt-1">{errors.productDetail}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">更新说明</label>
@@ -371,16 +521,17 @@ function MaterialUploadModal({
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">关键词 <span className="text-red-500">*</span> (1-5个)</label>
                   <input type="text" className="w-full border rounded px-3 py-2" placeholder="请输入关键词，用逗号分隔" />
+                  <p className="text-xs text-gray-500 mt-1">提示：输入关键词后按回车添加</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">应用图标 <span className="text-red-500">*</span> (≥180x180px)</label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传图标</p>
+                    <p className="text-sm text-gray-500 mt-1">点击上传图标 (jpg/png)</p>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图 <span className="text-red-500">*</span> (1080x594px)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">置顶大图 <span className="text-red-500">*</span> (1080x594px, ≤2MB)</label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
                     <p className="text-sm text-gray-500 mt-1">点击上传置顶大图</p>
@@ -390,8 +541,9 @@ function MaterialUploadModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">详情截图 <span className="text-red-500">*</span> (3-5张)</label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
                     <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图</p>
+                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图 (需要3-5张)</p>
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">支持竖屏480x854或横屏854x480</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">是否GP上架</label>
@@ -536,16 +688,56 @@ function MaterialAuditModal({
               )}
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[30vh]">
+            <div className="p-6 overflow-y-auto max-h-[40vh]">
               <h4 className="font-medium mb-4">物料上传详情 (只读)</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="p-3 bg-gray-50 rounded">
-                  <div className="text-gray-500">应用名称</div>
-                  <div className="font-medium">{apk.appName}</div>
+              
+              {/* 基础信息 */}
+              <div className="mb-4">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">应用信息</h5>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">应用名称</div>
+                    <div className="font-medium">{apk.appName}</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">应用包名</div>
+                    <div className="font-medium">{apk.packageName}</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">版本号</div>
+                    <div className="font-medium">v{apk.versionCode}</div>
+                  </div>
                 </div>
-                <div className="p-3 bg-gray-50 rounded">
-                  <div className="text-gray-500">应用包名</div>
-                  <div className="font-medium">{apk.packageName}</div>
+              </div>
+
+              {/* 物料信息 */}
+              <div>
+                <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">应用名称</div>
+                    <div className="font-medium">Spotify Music</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">一句话描述</div>
+                    <div className="font-medium">音乐播放器</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded col-span-2">
+                    <div className="text-gray-500">产品详情</div>
+                    <div className="font-medium">音乐播放应用</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded col-span-2">
+                    <div className="text-gray-500">关键词</div>
+                    <div className="font-medium">music, streaming, audio, player</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">是否GP上架</div>
+                    <div className="font-medium">是</div>
+                  </div>
+                  <div className="p-3 bg-gray-50 rounded">
+                    <div className="text-gray-500">GP链接</div>
+                    <div className="font-medium text-blue-600">https://play.google.com/store/apps...</div>
+                  </div>
                 </div>
               </div>
             </div>
