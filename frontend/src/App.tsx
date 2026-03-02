@@ -414,7 +414,7 @@ function ChannelAuditModal({
           </div>
         </div>
 
-        {/* 通道发布详情 - 只读 - 完整展示 */}
+        {/* 通道发布详情 - 只读 - 与申请Modal保持一致 */}
         <div className="p-6 overflow-y-auto max-h-[50vh]">
           {activeTab === 'basic' && (
           <>
@@ -484,11 +484,11 @@ function ChannelAuditModal({
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">灰度量级</div>
-                <div className="font-medium">1000/天</div>
+                <div className="font-medium">1000~100000</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">生效时间</div>
-                <div className="font-medium">2026-03-02</div>
+                <div className="font-medium">2026/03/02~2026/03/30</div>
               </div>
             </div>
           </div>
@@ -531,18 +531,18 @@ function ChannelAuditModal({
             ))}
           </div>
           
-          {/* 当前语言的物料信息 */}
+          {/* 当前语言的物料信息 - 与申请Modal一致，字段都不必填 */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">应用名称 <span className="text-red-500">*</span></div>
+              <div className="text-gray-500">外应用名称</div>
               <div className="font-medium">{apk.appName}</div>
             </div>
             <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">一句话描述 <span className="text-red-500">*</span></div>
+              <div className="text-gray-500">一句话描述</div>
               <div className="font-medium">音乐播放器</div>
             </div>
             <div className="p-3 bg-gray-50 rounded col-span-2">
-              <div className="text-gray-500">产品详情 <span className="text-red-500">*</span></div>
+              <div className="text-gray-500">产品详情</div>
               <div className="font-medium">完整音乐播放器，支持离线播放</div>
             </div>
             <div className="p-3 bg-gray-50 rounded col-span-2">
@@ -550,7 +550,7 @@ function ChannelAuditModal({
               <div className="font-medium">性能优化，修复bug</div>
             </div>
             <div className="p-3 bg-gray-50 rounded col-span-2">
-              <div className="text-gray-500">关键词 <span className="text-red-500">*</span> (1-5个)</div>
+              <div className="text-gray-500">关键词 (1-5个)</div>
               <div className="font-medium">music, streaming, audio, player</div>
             </div>
             <div className="p-3 bg-gray-50 rounded">
@@ -637,8 +637,12 @@ function MaterialUploadModal({
     tosVersionType: 'all',
     tosVersionList: [] as string[],
     isPAUpdate: 'yes',
-    grayScaleLevel: 1000,
-    effectiveTime: '',
+    // 灰度量级范围 (XXXX~XXXXXX)
+    grayScaleLevelMin: 1000,
+    grayScaleLevelMax: 100000,
+    // 生效时间范围 (xxxx/xx/xx~xxxx/xx/xx)
+    effectiveTimeStart: '',
+    effectiveTimeEnd: '',
     materials: {
       en: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
       zh: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
@@ -870,11 +874,11 @@ function MaterialUploadModal({
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">应用名称 <span className="text-red-500">*</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">外应用名称 <span className="text-red-500">*</span></label>
                   <input 
                     type="text" 
                     className={`w-full border rounded px-3 py-2 ${errors.appName ? 'border-red-500' : ''}`} 
-                    placeholder="请输入应用名称" 
+                    placeholder="请输入外应用名称" 
                   />
                   {errors.appName && <p className="text-red-500 text-xs mt-1">{errors.appName}</p>}
                 </div>
@@ -1114,20 +1118,20 @@ function MaterialAuditModal({
                     </div>
                   </div>
 
-                  {/* 物料信息 - 物料审核时全部为必填 */}
+                  {/* 物料信息 - 与申请Modal一致，只读展示 */}
                   <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语) <span className="text-red-500">*全部必填</span></h5>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">应用名称 <span className="text-red-500">*</span></div>
+                        <div className="text-gray-500">外应用名称</div>
                         <div className="font-medium">{apk.appName}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">一句话描述 <span className="text-red-500">*</span></div>
+                        <div className="text-gray-500">一句话描述</div>
                         <div className="font-medium">音乐播放器</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">产品详情 <span className="text-red-500">*</span></div>
+                        <div className="text-gray-500">产品详情</div>
                         <div className="font-medium">完整音乐播放器，支持离线播放</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
@@ -1135,7 +1139,7 @@ function MaterialAuditModal({
                         <div className="font-medium">性能优化，修复已知问题</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">关键词 <span className="text-red-500">*</span> (1-5个)</div>
+                        <div className="text-gray-500">关键词 (1-5个)</div>
                         <div className="font-medium">music, streaming, audio, player</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
@@ -1281,8 +1285,12 @@ function ChannelApplyModal({
     tosVersionType: 'all',
     tosVersionList: [] as string[],
     isPAUpdate: 'yes',
-    grayScaleLevel: 1000,
-    effectiveTime: '',
+    // 灰度量级范围 (XXXX~XXXXXX)
+    grayScaleLevelMin: 1000,
+    grayScaleLevelMax: 100000,
+    // 生效时间范围 (xxxx/xx/xx~xxxx/xx/xx)
+    effectiveTimeStart: '',
+    effectiveTimeEnd: '',
     materials: {
       en: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
       zh: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
@@ -1352,7 +1360,7 @@ function ChannelApplyModal({
     const newErrors: Record<string, string> = {};
     if (!formData.versionCode) newErrors.versionCode = '请选择应用版本号';
     if (!formData.appCategory) newErrors.appCategory = '请选择应用分类';
-    if (formData.isPAUpdate === 'yes' && !formData.effectiveTime) newErrors.effectiveTime = '请选择生效时间';
+    if (formData.isPAUpdate === 'yes' && (!formData.effectiveTimeStart || !formData.effectiveTimeEnd)) newErrors.effectiveTime = '请选择生效时间范围';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1702,8 +1710,8 @@ function ChannelApplyModal({
               {/* PA更新 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">是否PA应用更新</label>
-                <div className="flex gap-4 items-center">
-                  <div className="flex gap-4">
+                <div className="flex gap-4 items-start">
+                  <div className="flex gap-4 mt-2">
                     <label className="flex items-center gap-2">
                       <input type="radio" name="isPAUpdate" value="yes" checked={formData.isPAUpdate === 'yes'} onChange={(e) => setFormData({...formData, isPAUpdate: e.target.value})} />
                       是
@@ -1714,28 +1722,47 @@ function ChannelApplyModal({
                     </label>
                   </div>
                   {formData.isPAUpdate === 'yes' && (
-                    <div className="flex gap-4 items-center">
-                      <input 
-                        type="number" 
-                        placeholder="灰度量级" 
-                        className={`border rounded px-3 py-2 w-32 ${formData.grayScaleLevel < 1 || formData.grayScaleLevel > 100000 ? 'border-red-500' : ''}`}
-                        value={formData.grayScaleLevel}
-                        min={1}
-                        max={100000}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          if (val <= 100000) {
-                            setFormData({...formData, grayScaleLevel: val});
-                          }
-                        }}
-                      />
-                      <span className="text-sm text-gray-500">(1-100000)</span>
-                      <input 
-                        type="datetime-local" 
-                        className="border rounded px-3 py-2"
-                        value={formData.effectiveTime}
-                        onChange={(e) => setFormData({...formData, effectiveTime: e.target.value})}
-                      />
+                    <div className="flex flex-col gap-2">
+                      {/* 灰度量级范围 XXXX~XXXXXX */}
+                      <div className="flex gap-2 items-center">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">灰度量级:</label>
+                        <input 
+                          type="number" 
+                          placeholder="最小值" 
+                          className="border rounded px-2 py-1 w-20 text-sm"
+                          value={formData.grayScaleLevelMin}
+                          min={1}
+                          max={999999}
+                          onChange={(e) => setFormData({...formData, grayScaleLevelMin: parseInt(e.target.value) || 0})}
+                        />
+                        <span className="text-gray-400">~</span>
+                        <input 
+                          type="number" 
+                          placeholder="最大值" 
+                          className="border rounded px-2 py-1 w-20 text-sm"
+                          value={formData.grayScaleLevelMax}
+                          min={1}
+                          max={999999}
+                          onChange={(e) => setFormData({...formData, grayScaleLevelMax: parseInt(e.target.value) || 0})}
+                        />
+                      </div>
+                      {/* 生效时间范围 xxxx/xx/xx~xxxx/xx/xx */}
+                      <div className="flex gap-2 items-center">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">生效时间:</label>
+                        <input 
+                          type="date" 
+                          className="border rounded px-2 py-1 text-sm"
+                          value={formData.effectiveTimeStart}
+                          onChange={(e) => setFormData({...formData, effectiveTimeStart: e.target.value})}
+                        />
+                        <span className="text-gray-400">~</span>
+                        <input 
+                          type="date" 
+                          className="border rounded px-2 py-1 text-sm"
+                          value={formData.effectiveTimeEnd}
+                          onChange={(e) => setFormData({...formData, effectiveTimeEnd: e.target.value})}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1793,16 +1820,16 @@ function ChannelApplyModal({
                 )}
               </div>
 
-              {/* 物料表单 */}
+              {/* 物料表单 - 所需物料中字段都为不必填 */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    应用名称 <span className="text-red-500">*</span> (英语必填)
+                    外应用名称
                   </label>
                   <input 
                     type="text" 
-                    className={`w-full border rounded px-3 py-2 ${errors.matAppName ? 'border-red-500' : ''}`} 
-                    placeholder="请输入应用名称"
+                    className="w-full border rounded px-3 py-2" 
+                    placeholder="请输入外应用名称"
                     value={formData.materials[activeLang as keyof typeof formData.materials]?.appName || ''}
                     onChange={(e) => setFormData({
                       ...formData,
@@ -1812,14 +1839,13 @@ function ChannelApplyModal({
                       }
                     })}
                   />
-                  {errors.matAppName && <p className="text-red-500 text-xs mt-1">{errors.matAppName}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    一句话描述 <span className="text-red-500">*</span>
+                    一句话描述
                   </label>
                   <textarea 
-                    className={`w-full border rounded px-3 py-2 ${errors.matShortDesc ? 'border-red-500' : ''}`} 
+                    className="w-full border rounded px-3 py-2" 
                     rows={2} 
                     placeholder="请输入一句话描述"
                     value={formData.materials[activeLang as keyof typeof formData.materials]?.shortDescription || ''}
@@ -1831,14 +1857,13 @@ function ChannelApplyModal({
                       }
                     })}
                   />
-                  {errors.matShortDesc && <p className="text-red-500 text-xs mt-1">{errors.matShortDesc}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    产品详情 <span className="text-red-500">*</span>
+                    产品详情
                   </label>
                   <textarea 
-                    className={`w-full border rounded px-3 py-2 ${errors.matProductDetail ? 'border-red-500' : ''}`} 
+                    className="w-full border rounded px-3 py-2" 
                     rows={4} 
                     placeholder="请输入产品详情"
                     value={formData.materials[activeLang as keyof typeof formData.materials]?.productDetail || ''}
@@ -1850,7 +1875,6 @@ function ChannelApplyModal({
                       }
                     })}
                   />
-                  {errors.matProductDetail && <p className="text-red-500 text-xs mt-1">{errors.matProductDetail}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">更新说明</label>
@@ -1872,7 +1896,7 @@ function ChannelApplyModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">关键词 (1-5个)</label>
                   <input 
                     type="text" 
-                    className={`w-full border rounded px-3 py-2 ${errors.matKeywords ? 'border-red-500' : ''}`} 
+                    className="w-full border rounded px-3 py-2" 
                     placeholder="请输入关键词，用逗号分隔"
                     value={formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || ''}
                     onChange={(e) => {
@@ -1889,12 +1913,10 @@ function ChannelApplyModal({
                     }}
                   />
                   <p className="text-xs text-gray-500 mt-1">已选: {formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || '无'} ({(formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.length || 0)}/5)</p>
-                  {errors.matKeywords && <p className="text-red-500 text-xs mt-1">{errors.matKeywords}</p>}
                 </div>
                 <div>
                   <ImageUpload
                     label="应用图标"
-                    required
                     accept="image/png,image/jpeg"
                     width={180}
                     height={180}
@@ -1906,13 +1928,11 @@ function ChannelApplyModal({
                         [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], icon: file }
                       }
                     })}
-                    error={errors.matIcon}
                   />
                 </div>
                 <div>
                   <ImageUpload
                     label="置顶大图"
-                    required
                     accept="image/png,image/jpeg"
                     width={1080}
                     height={594}
@@ -1925,13 +1945,11 @@ function ChannelApplyModal({
                         [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], heroImage: file }
                       }
                     })}
-                    error={errors.matHeroImage}
                   />
                 </div>
                 <div>
                   <MultiImageUpload
                     label="详情截图"
-                    required
                     minCount={3}
                     maxCount={5}
                     width={480}
@@ -1944,7 +1962,6 @@ function ChannelApplyModal({
                         [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], screenshots: files }
                       }
                     })}
-                    error={errors.matScreenshots}
                   />
                   <p className="text-xs text-gray-500 mt-1">支持竖屏480x854或横屏854x480</p>
                 </div>
@@ -1986,7 +2003,7 @@ function ChannelApplyModal({
                   </div>
                   {formData.materials[activeLang as keyof typeof formData.materials]?.isGP上架 && (
                     <div className="mt-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">GP链接 <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">GP链接</label>
                       <input 
                         type="url" 
                         className="w-full border rounded px-3 py-2" 
