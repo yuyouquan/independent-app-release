@@ -43,23 +43,26 @@ const languageOptions = [
   { code: 'pt', name: '葡萄牙语' },
 ];
 
-// 应用分类选项
+// 应用分类选项 - 与PRD一致
 const appCategoryOptions = [
-  'Social', 'Music', 'Video', 'Shopping', 'Finance', 
-  'Travel', 'Weather', 'Education', 'Game', 'Business'
+  'Travel & Local', 'Shopping', 'Entertainment', 'Finance', 'Business', 
+  'Weather', 'Social', 'Education', 'Medical', 'Auto & Vehicles'
 ];
 
-// 国家选项
+// 国家选项 - 英文枚举
 const countryOptions = [
-  '美国', '英国', '德国', '法国', '西班牙', '意大利', '巴西', '印度',
-  '印尼', '泰国', '越南', '菲律宾', '马来西亚', '新加坡', '日本', '韩国'
+  'USA', 'UK', 'Germany', 'France', 'Spain', 'Italy', 'Brazil', 'India',
+  'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Malaysia', 'Singapore', 'Japan', 'Korea', 'Global'
 ];
 
-// 品牌选项
+// 品牌选项 - 与PRD一致
 const brandOptions = ['Tecno', 'Infinix', 'itel'];
 
-// 机型选项
+// 机型选项 - 与PRD一致
 const deviceOptions = ['X6841_H6941', 'X6858_H8917', 'KO5_H8925', 'Pova'];
+
+// 安卓版本选项 - 与PRD一致
+const androidVersionOptions = ['Android 11', 'Android 12', 'Android 13', 'Android 14', 'Android 15', 'Android 16'];
 
 // ==================== 图片上传组件 ====================
 function ImageUpload({
@@ -484,7 +487,7 @@ function ChannelAuditModal({
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">灰度量级</div>
-                <div className="font-medium">1000~100000</div>
+                <div className="font-medium">1000~100000/天</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">生效时间</div>
@@ -911,8 +914,9 @@ function MaterialUploadModal({
                       <div className="flex gap-2 items-center">
                         <label className="text-sm text-gray-600 whitespace-nowrap">灰度量级:</label>
                         <input type="number" placeholder="最小值" className="border rounded px-2 py-1 w-20 text-sm" value={formData.grayScaleLevelMin} onChange={(e) => setFormData({...formData, grayScaleLevelMin: parseInt(e.target.value) || 0})} />
-                        <span className="text-gray-400">~</span>
+                        <span className="text-gray-400">~/天 ~</span>
                         <input type="number" placeholder="最大值" className="border rounded px-2 py-1 w-20 text-sm" value={formData.grayScaleLevelMax} onChange={(e) => setFormData({...formData, grayScaleLevelMax: parseInt(e.target.value) || 0})} />
+                        <span className="text-gray-400">/天</span>
                       </div>
                       <div className="flex gap-2 items-center">
                         <label className="text-sm text-gray-600 whitespace-nowrap">生效时间:</label>
@@ -1838,7 +1842,7 @@ function ChannelApplyModal({
                           max={999999}
                           onChange={(e) => setFormData({...formData, grayScaleLevelMin: parseInt(e.target.value) || 0})}
                         />
-                        <span className="text-gray-400">~</span>
+                        <span className="text-gray-400">~/天 ~</span>
                         <input 
                           type="number" 
                           placeholder="最大值" 
@@ -1848,6 +1852,7 @@ function ChannelApplyModal({
                           max={999999}
                           onChange={(e) => setFormData({...formData, grayScaleLevelMax: parseInt(e.target.value) || 0})}
                         />
+                        <span className="text-gray-400">/天</span>
                       </div>
                       {/* 生效时间范围 xxxx/xx/xx~xxxx/xx/xx */}
                       <div className="flex gap-2 items-center">
