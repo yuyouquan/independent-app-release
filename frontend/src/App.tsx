@@ -79,6 +79,7 @@ function ChannelAuditModal({
 }) {
   const [auditResult, setAuditResult] = useState<'pass' | 'reject' | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [activeTab, setActiveTab] = useState<'basic' | 'scope' | 'material'>('basic');
 
   if (!isOpen) return null;
 
@@ -174,16 +175,41 @@ function ChannelAuditModal({
           )}
         </div>
 
+        {/* Tab切换 - 通道发布详情 */}
+        <div className="px-6 py-3 border-b bg-gray-50">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              基础信息
+            </button>
+            <button
+              onClick={() => setActiveTab('scope')}
+              className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'scope' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              发布范围
+            </button>
+            <button
+              onClick={() => setActiveTab('material')}
+              className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              物料信息
+            </button>
+          </div>
+        </div>
+
         {/* 通道发布详情 - 只读 - 完整展示 */}
         <div className="p-6 overflow-y-auto max-h-[50vh]">
+          {activeTab === 'basic' && (
+          <>
           <h4 className="font-medium mb-4 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            通道发布详情
+            基础信息
           </h4>
           
           {/* 基础信息 */}
           <div className="mb-4">
-            <h5 className="text-sm font-medium text-gray-700 mb-2">基础信息</h5>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">应用名称</div>
@@ -211,30 +237,38 @@ function ChannelAuditModal({
               </div>
             </div>
           </div>
+          </>
+          )}
 
+          {activeTab === 'scope' && (
+          <>
+          <h4 className="font-medium mb-4 flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            发布范围
+          </h4>
+          
           {/* 发布范围 */}
           <div className="mb-4">
-            <h5 className="text-sm font-medium text-gray-700 mb-2">发布范围</h5>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">发布国家</div>
+                <div className="font-medium">全球 (不含印度)</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">品牌</div>
                 <div className="font-medium">全部</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">发布品牌</div>
-                <div className="font-medium">全部</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">发布机型</div>
-                <div className="font-medium">全部</div>
+                <div className="text-gray-500">机型</div>
+                <div className="font-medium">全部机型</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">内测机型</div>
-                <div className="font-medium">全部</div>
+                <div className="font-medium">Pixel 5, Samsung S21</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">适用安卓版本</div>
-                <div className="font-medium">全部</div>
+                <div className="font-medium">8.0 - 14.0</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">适用tOS版本</div>
@@ -242,7 +276,7 @@ function ChannelAuditModal({
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">过滤印度</div>
-                <div className="font-medium">否</div>
+                <div className="font-medium">是</div>
               </div>
             </div>
           </div>
@@ -265,10 +299,18 @@ function ChannelAuditModal({
               </div>
             </div>
           </div>
+          </>
+          )}
 
+          {activeTab === 'material' && (
+          <>
+          <h4 className="font-medium mb-4 flex items-center gap-2">
+            <FileText className="w-4 h-4" />
+            物料信息
+          </h4>
+          
           {/* 物料信息 */}
           <div>
-            <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">应用名称</div>
@@ -277,6 +319,10 @@ function ChannelAuditModal({
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">一句话描述</div>
                 <div className="font-medium">音乐播放器</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded col-span-2">
+                <div className="text-gray-500">产品详情</div>
+                <div className="font-medium">完整音乐播放器，支持离线播放</div>
               </div>
               <div className="p-3 bg-gray-50 rounded col-span-2">
                 <div className="text-gray-500">关键词</div>
@@ -292,6 +338,8 @@ function ChannelAuditModal({
               </div>
             </div>
           </div>
+          </>
+          )}
 
           {/* 操作信息 */}
           <div className="mt-4 pt-4 border-t">
@@ -703,6 +751,7 @@ function MaterialAuditModal({
   const [operatorResult, setOperatorResult] = useState<'pass' | 'reject' | null>(null);
   const [bossResult, setBossResult] = useState<'pass' | 'reject' | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [activeTab, setActiveTab] = useState<'basic' | 'screenshots'>('basic');
 
   if (!isOpen) return null;
 
@@ -797,9 +846,28 @@ function MaterialAuditModal({
             </div>
 
             <div className="p-6 overflow-y-auto max-h-[40vh]">
+              {/* Tab切换 - 物料详情 */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setActiveTab('basic')}
+                    className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+                  >
+                    基础物料
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('screenshots')}
+                    className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'screenshots' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+                  >
+                    截图素材
+                  </button>
+                </div>
+              </div>
+
               <h4 className="font-medium mb-4">物料上传详情 (只读)</h4>
               
-              {/* 基础信息 */}
+              {activeTab === 'basic' && (
+              <div>
               <div className="mb-4">
                 <h5 className="text-sm font-medium text-gray-700 mb-2">应用信息</h5>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
@@ -848,6 +916,22 @@ function MaterialAuditModal({
                   </div>
                 </div>
               </div>
+
+              {/* 截图素材 */}
+              {activeTab === 'screenshots' && (
+              <div>
+                <h5 className="text-sm font-medium text-gray-700 mb-2">应用截图 (5张)</h5>
+                <div className="grid grid-cols-5 gap-2">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="aspect-[9:16] bg-gray-100 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-400">截图{i}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 text-sm text-gray-500">应用图标: 已上传 ✓</div>
+                <div className="mt-2 text-sm text-gray-500">置顶大图: 已上传 ✓</div>
+              </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
