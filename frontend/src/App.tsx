@@ -64,6 +64,179 @@ const deviceOptions = ['X6841_H6941', 'X6858_H8917', 'KO5_H8925', 'Pova'];
 // 安卓版本选项 - 与PRD一致
 const androidVersionOptions = ['Android 11', 'Android 12', 'Android 13', 'Android 14', 'Android 15', 'Android 16'];
 
+// 语言选项
+const languageLabels: Record<string, string> = {
+  en: '英语', zh: '中文', th: '泰语', id: '印尼语', pt: '葡萄牙语'
+};
+
+// ==================== 只读通道发布表单组件 ====================
+function ReadOnlyChannelForm({ apk, activeTab, setActiveTab, activeLang, setActiveLang, availableLangs }: {
+  apk: APKItem;
+  activeTab: string;
+  setActiveTab: (tab: 'basic' | 'material') => void;
+  activeLang: string;
+  setActiveLang: (lang: string) => void;
+  availableLangs: string[];
+}) {
+  const info = apk.applyInfo;
+
+  return (
+    <div className="space-y-6">
+      {activeTab === 'basic' && (
+        <div className="space-y-4">
+          <h4 className="font-medium text-lg">基础信息</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用名称</div><div className="font-medium">{apk.appName}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用包名</div><div className="font-medium">{apk.packageName}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用类型</div><div className="font-medium">{apk.appType}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">版本号</div><div className="font-medium">v{info?.versionCode || apk.versionCode}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用分类</div><div className="font-medium">{info?.appCategory || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">系统应用</div><div className="font-medium">{info?.systemApp === 'yes' ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">发布国家</div><div className="font-medium">{info?.countryType === 'all' ? '全部' : (info?.countryList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">品牌</div><div className="font-medium">{info?.brandType === 'all' ? '全部' : (info?.brandList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">发布机型</div><div className="font-medium">{info?.deviceType === 'all' ? '全部' : (info?.deviceList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">内测机型</div><div className="font-medium">{info?.betaDeviceType === 'all' ? '全部' : (info?.betaDeviceList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">安卓版本</div><div className="font-medium">{info?.androidVersionType === 'all' ? '全部' : (info?.androidVersionList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">tOS版本</div><div className="font-medium">{info?.tosVersionType === 'all' ? '全部' : (info?.tosVersionList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">过滤印度</div><div className="font-medium">{info?.filterIndia === 'yes' ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">是否PA更新</div><div className="font-medium">{info?.isPAUpdate === 'yes' ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">灰度量级</div><div className="font-medium">{info?.grayScaleLevelMin || '-'}~{info?.grayScaleLevelMax || '-'}/天</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">生效时间</div><div className="font-medium">{info?.effectiveTimeStart || '-'}~{info?.effectiveTimeEnd || '-'}</div></div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'material' && (
+        <div className="space-y-4">
+          <h4 className="font-medium text-lg">物料信息</h4>
+          <div className="flex gap-2 flex-wrap">
+            {availableLangs.map(lang => (
+              <button key={lang} onClick={() => setActiveLang(lang)} className={`px-3 py-1 rounded-full text-sm ${activeLang === lang ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                {languageLabels[lang] || lang}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">外应用名称</div><div className="font-medium">{info?.materials?.[activeLang]?.appName || apk.appName}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">一句话描述</div><div className="font-medium">{info?.materials?.[activeLang]?.shortDescription || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg col-span-2"><div className="text-xs text-gray-500">产品详情</div><div className="font-medium">{info?.materials?.[activeLang]?.productDetail || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg col-span-2"><div className="text-xs text-gray-500">更新说明</div><div className="font-medium">{info?.materials?.[activeLang]?.updateDescription || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg col-span-2"><div className="text-xs text-gray-500">关键词</div><div className="font-medium">{info?.materials?.[activeLang]?.keywords?.join(', ') || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">是否GP上架</div><div className="font-medium">{info?.materials?.[activeLang]?.isGP上架 ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">GP链接</div><div className="font-medium text-blue-600">{info?.materials?.[activeLang]?.gpLink || '-'}</div></div>
+          </div>
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">图片素材</h5>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-xs text-gray-500 mb-1">应用图标</div>
+                <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
+                  {info?.materials?.[activeLang]?.icon ? <img src={info.materials[activeLang].icon} alt="应用图标" className="w-12 h-12 object-contain" /> : <span className="text-gray-400 text-xs">未上传</span>}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 mb-1">置顶大图</div>
+                <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
+                  {info?.materials?.[activeLang]?.heroImage ? <img src={info.materials[activeLang].heroImage} alt="置顶大图" className="w-20 h-12 object-contain" /> : <span className="text-gray-400 text-xs">未上传</span>}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 mb-1">详情截图 ({info?.materials?.[activeLang]?.screenshots?.length || 0}张)</div>
+                <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center flex-wrap gap-1">
+                  {info?.materials?.[activeLang]?.screenshots?.length ? info.materials[activeLang].screenshots!.map((s, i) => <img key={i} src={s} alt={`截图${i+1}`} className="w-8 h-12 object-cover" />) : <span className="text-gray-400 text-xs">未上传</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ==================== 只读物料上传表单组件 ====================
+function ReadOnlyMaterialForm({ apk, activeTab, setActiveTab, activeLang, setActiveLang, availableLangs }: {
+  apk: APKItem;
+  activeTab: string;
+  setActiveTab: (tab: 'basic' | 'material') => void;
+  activeLang: string;
+  setActiveLang: (lang: string) => void;
+  availableLangs: string[];
+}) {
+  const info = apk.uploadInfo || apk.applyInfo;
+
+  return (
+    <div className="space-y-6">
+      {activeTab === 'basic' && (
+        <div className="space-y-4">
+          <h4 className="font-medium text-lg">基础信息</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用名称</div><div className="font-medium">{apk.appName}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用包名</div><div className="font-medium">{apk.packageName}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">版本号</div><div className="font-medium">v{info?.versionCode || apk.versionCode}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">应用分类</div><div className="font-medium">{info?.appCategory || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">系统应用</div><div className="font-medium">{info?.systemApp === 'yes' ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">发布国家</div><div className="font-medium">{info?.countryType === 'all' ? '全部' : (info?.countryList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">品牌</div><div className="font-medium">{info?.brandType === 'all' ? '全部' : (info?.brandList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">发布机型</div><div className="font-medium">{info?.deviceType === 'all' ? '全部' : (info?.deviceList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">安卓版本</div><div className="font-medium">{info?.androidVersionType === 'all' ? '全部' : (info?.androidVersionList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">tOS版本</div><div className="font-medium">{info?.tosVersionType === 'all' ? '全部' : (info?.tosVersionList?.join(', ') || '-')}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">过滤印度</div><div className="font-medium">{info?.filterIndia === 'yes' ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">是否PA更新</div><div className="font-medium">{info?.isPAUpdate === 'yes' ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">灰度量级</div><div className="font-medium">{info?.grayScaleLevelMin || '-'}~{info?.grayScaleLevelMax || '-'}/天</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">生效时间</div><div className="font-medium">{info?.effectiveTimeStart || '-'}~{info?.effectiveTimeEnd || '-'}</div></div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'material' && (
+        <div className="space-y-4">
+          <h4 className="font-medium text-lg">物料信息</h4>
+          <div className="flex gap-2 flex-wrap">
+            {availableLangs.map(lang => (
+              <button key={lang} onClick={() => setActiveLang(lang)} className={`px-3 py-1 rounded-full text-sm ${activeLang === lang ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}`}>
+                {languageLabels[lang] || lang}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">外应用名称</div><div className="font-medium">{info?.materials?.[activeLang]?.appName || apk.appName}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">一句话描述</div><div className="font-medium">{info?.materials?.[activeLang]?.shortDescription || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg col-span-2"><div className="text-xs text-gray-500">产品详情</div><div className="font-medium">{info?.materials?.[activeLang]?.productDetail || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg col-span-2"><div className="text-xs text-gray-500">更新说明</div><div className="font-medium">{info?.materials?.[activeLang]?.updateDescription || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg col-span-2"><div className="text-xs text-gray-500">关键词</div><div className="font-medium">{info?.materials?.[activeLang]?.keywords?.join(', ') || '-'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">是否GP上架</div><div className="font-medium">{info?.materials?.[activeLang]?.isGP上架 ? '是' : '否'}</div></div>
+            <div className="p-3 bg-gray-50 rounded-lg"><div className="text-xs text-gray-500">GP链接</div><div className="font-medium text-blue-600">{info?.materials?.[activeLang]?.gpLink || '-'}</div></div>
+          </div>
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">图片素材</h5>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-xs text-gray-500 mb-1">应用图标</div>
+                <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
+                  {info?.materials?.[activeLang]?.icon ? <img src={info.materials[activeLang].icon} alt="应用图标" className="w-12 h-12 object-contain" /> : <span className="text-gray-400 text-xs">未上传</span>}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 mb-1">置顶大图</div>
+                <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
+                  {info?.materials?.[activeLang]?.heroImage ? <img src={info.materials[activeLang].heroImage} alt="置顶大图" className="w-20 h-12 object-contain" /> : <span className="text-gray-400 text-xs">未上传</span>}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-gray-500 mb-1">详情截图 ({info?.materials?.[activeLang]?.screenshots?.length || 0}张)</div>
+                <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center flex-wrap gap-1">
+                  {info?.materials?.[activeLang]?.screenshots?.length ? info.materials[activeLang].screenshots!.map((s, i) => <img key={i} src={s} alt={`截图${i+1}`} className="w-8 h-12 object-cover" />) : <span className="text-gray-400 text-xs">未上传</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ==================== 图片上传组件 ====================
 function ImageUpload({
   label,
@@ -399,229 +572,16 @@ function ChannelAuditModal({
           )}
         </div>
 
-        {/* Tab切换 - 通道发布详情 */}
-        <div className="px-6 py-3 border-b bg-gray-50">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('basic')}
-              className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-            >
-              基础信息
-            </button>
-            <button
-              onClick={() => setActiveTab('material')}
-              className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-            >
-              物料信息
-            </button>
-          </div>
-        </div>
-
-        {/* 通道发布详情 - 只读 - 与申请Modal保持一致 */}
+        {/* 通道发布详情 - 只读表单 */}
         <div className="p-6 overflow-y-auto max-h-[50vh]">
-          {activeTab === 'basic' && (
-          <>
-          <h4 className="font-medium mb-4 flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            基础信息
-          </h4>
-          
-          {/* 基础信息 - 与申请时保持一致 */}
-          <div className="mb-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">应用名称</div>
-                <div className="font-medium">{apk.appName}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">应用包名</div>
-                <div className="font-medium">{apk.packageName}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">应用类型</div>
-                <div className="font-medium">{apk.appType}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">版本号</div>
-                <div className="font-medium">v{apk.applyInfo?.versionCode || apk.versionCode}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">应用分类</div>
-                <div className="font-medium">{apk.applyInfo?.appCategory || '-'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">系统应用</div>
-                <div className="font-medium">{apk.applyInfo?.systemApp === 'yes' ? '是' : '否'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">发布国家</div>
-                <div className="font-medium">{apk.applyInfo?.countryType === 'all' ? '全部' : (apk.applyInfo?.countryList?.join(', ') || '-')}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">品牌</div>
-                <div className="font-medium">{apk.applyInfo?.brandType === 'all' ? '全部' : (apk.applyInfo?.brandList?.join(', ') || '-')}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">机型</div>
-                <div className="font-medium">{apk.applyInfo?.deviceType === 'all' ? '全部' : (apk.applyInfo?.deviceList?.join(', ') || '-')}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">内测机型</div>
-                <div className="font-medium">{apk.applyInfo?.betaDeviceType === 'all' ? '全部' : (apk.applyInfo?.betaDeviceList?.join(', ') || '-')}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">安卓版本</div>
-                <div className="font-medium">{apk.applyInfo?.androidVersionType === 'all' ? '全部' : (apk.applyInfo?.androidVersionList?.join(', ') || '-')}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">tOS版本</div>
-                <div className="font-medium">{apk.applyInfo?.tosVersionType === 'all' ? '全部' : (apk.applyInfo?.tosVersionList?.join(', ') || '-')}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">过滤印度</div>
-                <div className="font-medium">{apk.applyInfo?.filterIndia === 'yes' ? '是' : '否'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">是否PA更新</div>
-                <div className="font-medium">{apk.applyInfo?.isPAUpdate === 'yes' ? '是' : '否'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">灰度量级</div>
-                <div className="font-medium">{apk.applyInfo?.grayScaleLevelMin || '-'}{apk.applyInfo?.grayScaleLevelMin ? '~/天 ~' : ''}{apk.applyInfo?.grayScaleLevelMax || '-'}{apk.applyInfo?.grayScaleLevelMax ? '/天' : ''}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">生效时间</div>
-                <div className="font-medium">{apk.applyInfo?.effectiveTimeStart || '-'}{apk.applyInfo?.effectiveTimeStart ? '~' : ''}{apk.applyInfo?.effectiveTimeEnd || '-'}</div>
-              </div>
-            </div>
-          </div>
-          </>
-          )}
-
-          {activeTab === 'material' && (
-          <>
-          <h4 className="font-medium mb-4 flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            物料信息 (按语言Tab切换)
-          </h4>
-          
-          {/* 语言Tab切换 */}
-          <div className="mb-4 flex gap-2 flex-wrap">
-            {availableLangs.map(lang => (
-              <button
-                key={lang}
-                onClick={() => setActiveLang(lang)}
-                className={`px-3 py-1 rounded-full text-sm ${
-                  activeLang === lang 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {lang === 'en' ? '英语' : 
-                 lang === 'zh' ? '中文' : 
-                 lang === 'th' ? '泰语' : 
-                 lang === 'id' ? '印尼语' : 
-                 lang === 'pt' ? '葡萄牙语' : lang}
-                {lang !== 'en' && (
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); removeLanguage(lang); }}
-                    className="ml-1 text-xs hover:text-red-500"
-                  >
-                    ×
-                  </button>
-                )}
-              </button>
-            ))}
-          </div>
-          
-          {/* 当前语言的物料信息 - 与申请Modal一致 */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">外应用名称</div>
-                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.appName || apk.appName}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">一句话描述</div>
-                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.shortDescription || '-'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded col-span-2">
-                <div className="text-gray-500">产品详情</div>
-                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.productDetail || '-'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded col-span-2">
-                <div className="text-gray-500">更新说明</div>
-                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.updateDescription || '-'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded col-span-2">
-                <div className="text-gray-500">关键词 (1-5个)</div>
-                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.keywords?.join(', ') || '-'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">是否GP上架</div>
-                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.isGP上架 ? '是' : '否'}</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">GP链接</div>
-                <div className="font-medium text-blue-600">{apk.applyInfo?.materials?.[activeLang]?.gpLink || '-'}</div>
-              </div>
-            </div>
-            
-            {/* 图片素材 */}
-            <div className="mt-4">
-              <h5 className="text-sm font-medium text-gray-700 mb-2">图片素材</h5>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">应用图标</div>
-                  <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
-                    {apk.applyInfo?.materials?.[activeLang]?.icon ? (
-                      <img src={apk.applyInfo.materials[activeLang].icon} alt="应用图标" className="w-12 h-12 object-contain" />
-                    ) : (
-                      <span className="text-gray-400 text-xs">未上传</span>
-                    )}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">置顶大图</div>
-                  <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
-                    {apk.applyInfo?.materials?.[activeLang]?.heroImage ? (
-                      <img src={apk.applyInfo.materials[activeLang].heroImage} alt="置顶大图" className="w-20 h-12 object-contain" />
-                    ) : (
-                      <span className="text-gray-400 text-xs">未上传</span>
-                    )}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">详情截图 ({apk.applyInfo?.materials?.[activeLang]?.screenshots?.length || 0}张)</div>
-                  <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center flex-wrap gap-1">
-                    {apk.applyInfo?.materials?.[activeLang]?.screenshots?.length ? (
-                      apk.applyInfo.materials[activeLang].screenshots!.map((s, i) => (
-                        <img key={i} src={s} alt={`截图${i+1}`} className="w-8 h-12 object-cover" />
-                      ))
-                    ) : (
-                      <span className="text-gray-400 text-xs">未上传</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </>
-          )}
-
-          {/* 操作信息 */}
-          <div className="mt-4 pt-4 border-t">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">申请人</div>
-                <div className="font-medium">张三</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">申请时间</div>
-                <div className="font-medium">2026-03-01 10:00:00</div>
-              </div>
-            </div>
-          </div>
+          <ReadOnlyChannelForm 
+            apk={apk} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab}
+            activeLang={activeLang}
+            setActiveLang={setActiveLang}
+            availableLangs={availableLangs}
+          />
         </div>
 
         {/* Footer */}
