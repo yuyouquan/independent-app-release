@@ -61,6 +61,209 @@ const brandOptions = ['Tecno', 'Infinix', 'itel'];
 // 机型选项
 const deviceOptions = ['X6841_H6941', 'X6858_H8917', 'KO5_H8925', 'Pova'];
 
+// ==================== 图片上传组件 ====================
+function ImageUpload({
+  label,
+  required,
+  accept,
+  width,
+  height,
+  maxSizeMB,
+  value,
+  onChange,
+  error
+}: {
+  label: string;
+  required?: boolean;
+  accept?: string;
+  width?: number;
+  height?: number;
+  maxSizeMB?: number;
+  value?: string;
+  onChange: (file: File | null) => void;
+  error?: string;
+}) {
+  const [preview, setPreview] = useState<string | null>(value || null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // 验证文件大小
+    if (maxSizeMB && file.size > maxSizeMB * 1024 * 1024) {
+      setUploadError(`文件大小不能超过${maxSizeMB}MB`);
+      return;
+    }
+
+    setUploadError('');
+    setUploading(true);
+
+    // 创建预览
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setPreview(result);
+      setUploading(false);
+      onChange(file);
+    };
+    reader.onerror = () => {
+      setUploadError('文件读取失败');
+      setUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemove = () => {
+    setPreview(null);
+    onChange(null);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+        {width && height && <span className="text-gray-400 font-normal ml-1">({width}x{height}px)</span>}
+        {maxSizeMB && <span className="text-gray-400 font-normal ml-1">≤{maxSizeMB}MB</span>}
+      </label>
+      <input
+        type="file"
+        accept={accept || 'image/*'}
+        onChange={handleFileChange}
+        className="hidden"
+        id={`upload-${label}`}
+      />
+      {preview ? (
+        <div className="relative inline-block">
+          <img src={preview} alt={label} className="max-w-[200px] max-h-[200px] rounded-lg border" />
+          <button
+            onClick={handleRemove}
+            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+          >
+            ×
+          </button>
+        </div>
+      ) : (
+        <label
+          htmlFor={`upload-${label}`}
+          className="border-2 border-dashed rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer block"
+        >
+          {uploading ? (
+            <div className="text-blue-500">上传中...</div>
+          ) : (
+            <>
+              <Upload className="w-8 h-8 mx-auto text-gray-400" />
+              <p className="text-sm text-gray-500 mt-1">点击上传{label}</p>
+            </>
+          )}
+        </label>
+      )}
+      {(error || uploadError) && <p className="text-red-500 text-xs mt-1">{error || uploadError}</p>}
+    </div>
+  );
+}
+
+// 多图上传组件
+function MultiImageUpload({
+  label,
+  required,
+  minCount,
+  maxCount,
+  width,
+  height,
+  value,
+  onChange,
+  error
+}: {
+  label: string;
+  required?: boolean;
+  minCount?: number;
+  maxCount?: number;
+  width?: number;
+  height?: number;
+  value?: string[];
+  onChange: (files: File[]) => void;
+  error?: string;
+}) {
+  const [previews, setPreviews] = useState<string[]>(value || []);
+  const [files, setFiles] = useState<File[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newFiles = Array.from(e.target.files || []);
+    const totalCount = files.length + newFiles.length;
+    
+    if (maxCount && totalCount > maxCount) {
+      alert(`最多只能上传${maxCount}张图片`);
+      return;
+    }
+
+    // 创建预览
+    const newPreviews: string[] = [];
+    newFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        newPreviews.push(reader.result as string);
+        if (newPreviews.length === newFiles.length) {
+          setPreviews([...previews, ...newPreviews]);
+          setFiles([...files, ...newFiles]);
+          onChange([...files, ...newFiles]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemove = (index: number) => {
+    const newPreviews = previews.filter((_, i) => i !== index);
+    const newFiles = files.filter((_, i) => i !== index);
+    setPreviews(newPreviews);
+    setFiles(newFiles);
+    onChange(newFiles);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+        {minCount && maxCount && <span className="text-gray-400 font-normal ml-1">({minCount}-{maxCount}张)</span>}
+        {width && height && <span className="text-gray-400 font-normal ml-1">{width}x{height}px</span>}
+      </label>
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleFileChange}
+        className="hidden"
+        id={`multi-upload-${label}`}
+      />
+      <div className="flex flex-wrap gap-2">
+        {previews.map((preview, index) => (
+          <div key={index} className="relative">
+            <img src={preview} alt={`${label} ${index + 1}`} className="w-20 h-20 object-cover rounded-lg border" />
+            <button
+              onClick={() => handleRemove(index)}
+              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        {(!maxCount || previews.length < maxCount) && (
+          <label
+            htmlFor={`multi-upload-${label}`}
+            className="w-20 h-20 border-2 border-dashed rounded-lg flex items-center justify-center hover:bg-gray-50 cursor-pointer"
+          >
+            <Upload className="w-6 h-6 text-gray-400" />
+          </label>
+        )}
+      </div>
+      <p className="text-xs text-gray-500 mt-1">已上传: {previews.length} {maxCount ? `/ ${maxCount}` : ''}</p>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+}
+
 // ==================== 通道发布审核Modal ====================
 function ChannelAuditModal({
   isOpen,
@@ -481,11 +684,15 @@ function MaterialUploadModal({
   // 验证物料必填字段
   const validateMaterial = () => {
     const newErrors: Record<string, string> = {};
-    const mat = formData.materials[activeLang as keyof typeof formData.materials];
+    const mat = formData.materials[activeLang as keyof typeof formData.materials] as any;
     
-    if (!mat.appName.trim()) newErrors.appName = '请输入应用名称';
-    if (!mat.shortDescription.trim()) newErrors.shortDescription = '请输入一句话描述';
-    if (!mat.productDetail.trim()) newErrors.productDetail = '请输入产品详情';
+    if (!mat.appName?.trim()) newErrors.matAppName = '请输入应用名称';
+    if (!mat.shortDescription?.trim()) newErrors.matShortDesc = '请输入一句话描述';
+    if (!mat.productDetail?.trim()) newErrors.matProductDetail = '请输入产品详情';
+    if (!mat.icon) newErrors.matIcon = '请上传应用图标';
+    if (!mat.heroImage) newErrors.matHeroImage = '请上传置顶大图';
+    if (!mat.screenshots || mat.screenshots.length < 3) newErrors.matScreenshots = '请上传3-5张详情截图';
+    if (mat.keywords && mat.keywords.length > 5) newErrors.matKeywords = '关键词最多5个';
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -1077,11 +1284,11 @@ function ChannelApplyModal({
     grayScaleLevel: 1000,
     effectiveTime: '',
     materials: {
-      en: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
-      zh: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
-      th: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
-      id: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
-      pt: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '' },
+      en: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
+      zh: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
+      th: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
+      id: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
+      pt: { appName: '', shortDescription: '', productDetail: '', updateDescription: '', keywords: [] as string[], isGP上架: false, gpLink: '', icon: null as File | null, heroImage: null as File | null, screenshots: [] as File[] },
     }
   });
 
@@ -1685,31 +1892,60 @@ function ChannelApplyModal({
                   {errors.matKeywords && <p className="text-red-500 text-xs mt-1">{errors.matKeywords}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    应用图标 <span className="text-red-500">*</span> (≥180x180px, 1:1)
-                  </label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
-                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传图标 (jpg/png, 尺寸≥180*180px)</p>
-                  </div>
+                  <ImageUpload
+                    label="应用图标"
+                    required
+                    accept="image/png,image/jpeg"
+                    width={180}
+                    height={180}
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.icon ? URL.createObjectURL(formData.materials[activeLang as keyof typeof formData.materials].icon!) : undefined}
+                    onChange={(file) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], icon: file }
+                      }
+                    })}
+                    error={errors.matIcon}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    置顶大图 <span className="text-red-500">*</span> (1080x594px, ≤2MB)
-                  </label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
-                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传置顶大图 (1080*594px, ≤2MB)</p>
-                  </div>
+                  <ImageUpload
+                    label="置顶大图"
+                    required
+                    accept="image/png,image/jpeg"
+                    width={1080}
+                    height={594}
+                    maxSizeMB={2}
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.heroImage ? URL.createObjectURL(formData.materials[activeLang as keyof typeof formData.materials].heroImage!) : undefined}
+                    onChange={(file) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], heroImage: file }
+                      }
+                    })}
+                    error={errors.matHeroImage}
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    详情截图 <span className="text-red-500">*</span> (3-5张)
-                  </label>
-                  <div className="border-2 border-dashed rounded-lg p-4 text-center hover:bg-gray-50 cursor-pointer">
-                    <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                    <p className="text-sm text-gray-500 mt-1">点击上传详情截图 (需要3-5张)</p>
-                  </div>
+                  <MultiImageUpload
+                    label="详情截图"
+                    required
+                    minCount={3}
+                    maxCount={5}
+                    width={480}
+                    height={854}
+                    value={formData.materials[activeLang as keyof typeof formData.materials]?.screenshots?.map(f => URL.createObjectURL(f))}
+                    onChange={(files) => setFormData({
+                      ...formData,
+                      materials: {
+                        ...formData.materials,
+                        [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], screenshots: files }
+                      }
+                    })}
+                    error={errors.matScreenshots}
+                  />
                   <p className="text-xs text-gray-500 mt-1">支持竖屏480x854或横屏854x480</p>
                 </div>
                 <div>
