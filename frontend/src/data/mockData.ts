@@ -138,7 +138,7 @@ export const mockApplications: Application[] = [
           systemApp: 'no',
           filterIndia: 'no',
           countryType: 'include',
-          countryList: ['USA', 'UK', 'Germany'],
+          countryList: ['印尼', '肯尼亚'],
           brandType: 'include',
           brandList: ['Tecno', 'Infinix'],
           deviceType: 'include',

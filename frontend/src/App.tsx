@@ -49,10 +49,9 @@ const appCategoryOptions = [
   'Weather', 'Social', 'Education', 'Medical', 'Auto & Vehicles'
 ];
 
-// 国家选项 - 英文枚举
+// 国家选项 - 与PRD一致（中文）
 const countryOptions = [
-  'USA', 'UK', 'Germany', 'France', 'Spain', 'Italy', 'Brazil', 'India',
-  'Indonesia', 'Thailand', 'Vietnam', 'Philippines', 'Malaysia', 'Singapore', 'Japan', 'Korea', 'Global'
+  '印度', '印尼', '巴基斯坦', '孟加拉', '尼日利亚', '肯尼亚', '埃塞俄比亚', '其他'
 ];
 
 // 品牌选项 - 与PRD一致
