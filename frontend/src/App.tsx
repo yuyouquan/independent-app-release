@@ -79,9 +79,27 @@ function ChannelAuditModal({
 }) {
   const [auditResult, setAuditResult] = useState<'pass' | 'reject' | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [activeTab, setActiveTab] = useState<'basic' | 'scope' | 'material'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
+  const [activeLang, setActiveLang] = useState('en');
+  const [availableLangs, setAvailableLangs] = useState(['en']);
 
   if (!isOpen) return null;
+
+  // 语言选项
+  const languageLabels: Record<string, string> = {
+    en: '英语', zh: '中文', th: '泰语', id: '印尼语', pt: '葡萄牙语'
+  };
+
+  // 删除语言（英语不可删除）
+  const removeLanguage = (code: string) => {
+    if (code !== 'en' && availableLangs.includes(code)) {
+      const newLangs = availableLangs.filter(l => l !== code);
+      setAvailableLangs(newLangs);
+      if (activeLang === code) {
+        setActiveLang('en');
+      }
+    }
+  };
 
   const handleSubmit = () => {
     if (auditResult === 'pass') {
@@ -185,12 +203,6 @@ function ChannelAuditModal({
               基础信息
             </button>
             <button
-              onClick={() => setActiveTab('scope')}
-              className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'scope' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-            >
-              发布范围
-            </button>
-            <button
               onClick={() => setActiveTab('material')}
               className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
             >
@@ -208,7 +220,7 @@ function ChannelAuditModal({
             基础信息
           </h4>
           
-          {/* 基础信息 */}
+          {/* 基础信息 - 与申请时保持一致 */}
           <div className="mb-4">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
               <div className="p-3 bg-gray-50 rounded">
@@ -235,24 +247,9 @@ function ChannelAuditModal({
                 <div className="text-gray-500">系统应用</div>
                 <div className="font-medium">否</div>
               </div>
-            </div>
-          </div>
-          </>
-          )}
-
-          {activeTab === 'scope' && (
-          <>
-          <h4 className="font-medium mb-4 flex items-center gap-2">
-            <FileText className="w-4 h-4" />
-            发布范围
-          </h4>
-          
-          {/* 发布范围 */}
-          <div className="mb-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">发布国家</div>
-                <div className="font-medium">全球 (不含印度)</div>
+                <div className="font-medium">全球</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">品牌</div>
@@ -260,31 +257,24 @@ function ChannelAuditModal({
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">机型</div>
-                <div className="font-medium">全部机型</div>
+                <div className="font-medium">全部</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">内测机型</div>
-                <div className="font-medium">Pixel 5, Samsung S21</div>
+                <div className="font-medium">-</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">适用安卓版本</div>
-                <div className="font-medium">8.0 - 14.0</div>
+                <div className="text-gray-500">安卓版本</div>
+                <div className="font-medium">全部</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">适用tOS版本</div>
+                <div className="text-gray-500">tOS版本</div>
                 <div className="font-medium">全部</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">过滤印度</div>
-                <div className="font-medium">是</div>
+                <div className="font-medium">否</div>
               </div>
-            </div>
-          </div>
-
-          {/* PA更新 */}
-          <div className="mb-4">
-            <h5 className="text-sm font-medium text-gray-700 mb-2">PA更新</h5>
-            <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">是否PA更新</div>
                 <div className="font-medium">是</div>
@@ -295,7 +285,7 @@ function ChannelAuditModal({
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">生效时间</div>
-                <div className="font-medium">2026-03-02 00:00:00</div>
+                <div className="font-medium">2026-03-02</div>
               </div>
             </div>
           </div>
@@ -306,36 +296,67 @@ function ChannelAuditModal({
           <>
           <h4 className="font-medium mb-4 flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            物料信息
+            物料信息 (按语言Tab切换)
           </h4>
           
-          {/* 物料信息 */}
-          <div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">应用名称</div>
-                <div className="font-medium">Spotify Music</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">一句话描述</div>
-                <div className="font-medium">音乐播放器</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded col-span-2">
-                <div className="text-gray-500">产品详情</div>
-                <div className="font-medium">完整音乐播放器，支持离线播放</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded col-span-2">
-                <div className="text-gray-500">关键词</div>
-                <div className="font-medium">music, streaming, audio</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">是否GP上架</div>
-                <div className="font-medium">是</div>
-              </div>
-              <div className="p-3 bg-gray-50 rounded">
-                <div className="text-gray-500">GP链接</div>
-                <div className="font-medium text-blue-600">https://play.google.com/...</div>
-              </div>
+          {/* 语言Tab切换 */}
+          <div className="mb-4 flex gap-2 flex-wrap">
+            {availableLangs.map(lang => (
+              <button
+                key={lang}
+                onClick={() => setActiveLang(lang)}
+                className={`px-3 py-1 rounded-full text-sm ${
+                  activeLang === lang 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {lang === 'en' ? '英语' : 
+                 lang === 'zh' ? '中文' : 
+                 lang === 'th' ? '泰语' : 
+                 lang === 'id' ? '印尼语' : 
+                 lang === 'pt' ? '葡萄牙语' : lang}
+                {lang !== 'en' && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); removeLanguage(lang); }}
+                    className="ml-1 text-xs hover:text-red-500"
+                  >
+                    ×
+                  </button>
+                )}
+              </button>
+            ))}
+          </div>
+          
+          {/* 当前语言的物料信息 */}
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">应用名称 <span className="text-red-500">*</span></div>
+              <div className="font-medium">{apk.appName}</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">一句话描述 <span className="text-red-500">*</span></div>
+              <div className="font-medium">音乐播放器</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded col-span-2">
+              <div className="text-gray-500">产品详情 <span className="text-red-500">*</span></div>
+              <div className="font-medium">完整音乐播放器，支持离线播放</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded col-span-2">
+              <div className="text-gray-500">更新说明</div>
+              <div className="font-medium">性能优化，修复bug</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded col-span-2">
+              <div className="text-gray-500">关键词 <span className="text-red-500">*</span> (1-5个)</div>
+              <div className="font-medium">music, streaming, audio, player</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">是否GP上架</div>
+              <div className="font-medium">是</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-gray-500">GP链接</div>
+              <div className="font-medium text-blue-600">https://play.google.com/...</div>
             </div>
           </div>
           </>
@@ -886,24 +907,28 @@ function MaterialAuditModal({
                     </div>
                   </div>
 
-                  {/* 物料信息 */}
+                  {/* 物料信息 - 物料审核时全部为必填 */}
                   <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语) <span className="text-red-500">*全部必填</span></h5>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">应用名称</div>
-                        <div className="font-medium">Spotify Music</div>
+                        <div className="text-gray-500">应用名称 <span className="text-red-500">*</span></div>
+                        <div className="font-medium">{apk.appName}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">一句话描述</div>
+                        <div className="text-gray-500">一句话描述 <span className="text-red-500">*</span></div>
                         <div className="font-medium">音乐播放器</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">产品详情</div>
-                        <div className="font-medium">音乐播放应用</div>
+                        <div className="text-gray-500">产品详情 <span className="text-red-500">*</span></div>
+                        <div className="font-medium">完整音乐播放器，支持离线播放</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">关键词</div>
+                        <div className="text-gray-500">更新说明</div>
+                        <div className="font-medium">性能优化，修复已知问题</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded col-span-2">
+                        <div className="text-gray-500">关键词 <span className="text-red-500">*</span> (1-5个)</div>
                         <div className="font-medium">music, streaming, audio, player</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
