@@ -1005,6 +1005,8 @@ function ChannelApplyModal({
     if (!mat.appName?.trim()) newErrors.matAppName = '请输入应用名称';
     if (!mat.shortDescription?.trim()) newErrors.matShortDesc = '请输入一句话描述';
     if (!mat.productDetail?.trim()) newErrors.matProductDetail = '请输入产品详情';
+    // 验证关键词数量 1-5个
+    if (mat.keywords && mat.keywords.length > 5) newErrors.matKeywords = '关键词最多5个';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -1357,11 +1359,18 @@ function ChannelApplyModal({
                       <input 
                         type="number" 
                         placeholder="灰度量级" 
-                        className="border rounded px-3 py-2 w-32"
+                        className={`border rounded px-3 py-2 w-32 ${formData.grayScaleLevel < 1 || formData.grayScaleLevel > 100000 ? 'border-red-500' : ''}`}
                         value={formData.grayScaleLevel}
-                        onChange={(e) => setFormData({...formData, grayScaleLevel: parseInt(e.target.value)})}
+                        min={1}
+                        max={100000}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0;
+                          if (val <= 100000) {
+                            setFormData({...formData, grayScaleLevel: val});
+                          }
+                        }}
                       />
-                      <span>/天</span>
+                      <span className="text-sm text-gray-500">(1-100000)</span>
                       <input 
                         type="datetime-local" 
                         className="border rounded px-3 py-2"
@@ -1504,21 +1513,24 @@ function ChannelApplyModal({
                   <label className="block text-sm font-medium text-gray-700 mb-1">关键词 (1-5个)</label>
                   <input 
                     type="text" 
-                    className="w-full border rounded px-3 py-2" 
+                    className={`w-full border rounded px-3 py-2 ${errors.matKeywords ? 'border-red-500' : ''}`} 
                     placeholder="请输入关键词，用逗号分隔"
                     value={formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || ''}
                     onChange={(e) => {
                       const keywords = e.target.value.split(',').map(k => k.trim()).filter(k => k);
+                      // 限制最多5个
+                      const limitedKeywords = keywords.slice(0, 5);
                       setFormData({
                         ...formData,
                         materials: {
                           ...formData.materials,
-                          [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], keywords }
+                          [activeLang]: { ...formData.materials[activeLang as keyof typeof formData.materials], keywords: limitedKeywords }
                         }
                       });
                     }}
                   />
-                  <p className="text-xs text-gray-500 mt-1">已选: {formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || '无'}</p>
+                  <p className="text-xs text-gray-500 mt-1">已选: {formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.join(', ') || '无'} ({(formData.materials[activeLang as keyof typeof formData.materials]?.keywords?.length || 0)}/5)</p>
+                  {errors.matKeywords && <p className="text-red-500 text-xs mt-1">{errors.matKeywords}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
