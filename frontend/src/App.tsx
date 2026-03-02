@@ -1082,7 +1082,7 @@ function MaterialAuditModal({
   const [operatorResult, setOperatorResult] = useState<'pass' | 'reject' | null>(null);
   const [bossResult, setBossResult] = useState<'pass' | 'reject' | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const [activeTab, setActiveTab] = useState<'basic' | 'screenshots'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
 
   if (!isOpen) return null;
 
@@ -1187,10 +1187,10 @@ function MaterialAuditModal({
                     基础物料
                   </button>
                   <button
-                    onClick={() => setActiveTab('screenshots')}
-                    className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'screenshots' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+                    onClick={() => setActiveTab('material')}
+                    className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
                   >
-                    截图素材
+                    物料信息
                   </button>
                 </div>
               </div>
@@ -1298,8 +1298,8 @@ function MaterialAuditModal({
                 </div>
               )}
 
-              {/* 截图素材 */}
-              {activeTab === 'screenshots' && (
+              {/* 物料信息 */}
+              {activeTab === 'material' && (
               <div>
                 <h5 className="text-sm font-medium text-gray-700 mb-2">应用截图 (5张)</h5>
                 <div className="grid grid-cols-5 gap-2">
