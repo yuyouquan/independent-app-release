@@ -66,12 +66,14 @@ function ChannelAuditModal({
   isOpen,
   onClose,
   apk,
+  readOnly,
   onPass,
   onReject
 }: {
   isOpen: boolean;
   onClose: () => void;
   apk: APKItem;
+  readOnly?: boolean;
   onPass: () => void;
   onReject: (reason: string) => void;
 }) {
@@ -104,38 +106,69 @@ function ChannelAuditModal({
 
         {/* 审核结果 - 固定在最上方 */}
         <div className="px-6 py-4 bg-gray-50 border-b">
-          <h4 className="font-medium mb-3">审核结果 <span className="text-red-500">*</span></h4>
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="auditResult"
-                checked={auditResult === 'pass'}
-                onChange={() => setAuditResult('pass')}
-                className="w-4 h-4 text-green-600"
-              />
-              <span className="text-green-700 font-medium">通过</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="auditResult"
-                checked={auditResult === 'reject'}
-                onChange={() => setAuditResult('reject')}
-                className="w-4 h-4 text-red-600"
-              />
-              <span className="text-red-700 font-medium">不通过</span>
-            </label>
-          </div>
-          {auditResult === 'reject' && (
+          <h4 className="font-medium mb-3">
+            审核结果 
+            {!readOnly && <span className="text-red-500">*</span>}
+            {readOnly && <span className="text-sm font-normal text-gray-500 ml-2">(仅查看)</span>}
+          </h4>
+          {readOnly ? (
+            // 只读模式：显示当前审核状态
+            <div className="flex items-center gap-4">
+              {apk.nodes[1]?.status === 'completed' ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">已通过</span>
+                </div>
+              ) : apk.nodes[1]?.status === 'rejected' ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <XCircle className="w-5 h-5" />
+                  <span className="font-medium">未通过</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-medium">进行中</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            // 编辑模式
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="auditResult"
+                  checked={auditResult === 'pass'}
+                  onChange={() => setAuditResult('pass')}
+                  className="w-4 h-4 text-green-600"
+                />
+                <span className="text-green-700 font-medium">通过</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="auditResult"
+                  checked={auditResult === 'reject'}
+                  onChange={() => setAuditResult('reject')}
+                  className="w-4 h-4 text-red-600"
+                />
+                <span className="text-red-700 font-medium">不通过</span>
+              </label>
+            </div>
+          )}
+          {(auditResult === 'reject' || (readOnly && apk.nodes[1]?.status === 'rejected')) && (
             <div className="mt-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                拒绝原因 
+                {!readOnly && <span className="text-red-500">*</span>}
+              </label>
               <textarea
-                className="w-full border rounded-lg px-3 py-2"
+                className={`w-full border rounded-lg px-3 py-2 ${readOnly ? 'bg-gray-100' : ''}`}
                 rows={3}
-                placeholder="请填写拒绝原因"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder={readOnly ? '' : "请填写拒绝原因"}
+                value={readOnly ? (apk.nodes[1]?.rejectReason || rejectReason) : rejectReason}
+                onChange={(e) => !readOnly && setRejectReason(e.target.value)}
+                readOnly={readOnly}
               />
             </div>
           )}
@@ -277,14 +310,18 @@ function ChannelAuditModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
-          <button
-            onClick={handleSubmit}
-            disabled={!auditResult || (auditResult === 'reject' && !rejectReason)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            确认
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">
+            {readOnly ? '关闭' : '取消'}
           </button>
+          {!readOnly && (
+            <button
+              onClick={handleSubmit}
+              disabled={!auditResult || (auditResult === 'reject' && !rejectReason)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              确认
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -296,11 +333,13 @@ function MaterialUploadModal({
   isOpen,
   onClose,
   apk,
+  readOnly,
   onSave
 }: {
   isOpen: boolean;
   onClose: () => void;
   apk: APKItem;
+  readOnly?: boolean;
   onSave: (data: any) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
@@ -645,6 +684,7 @@ function MaterialAuditModal({
   isOpen,
   onClose,
   apk,
+  readOnly,
   onOperatorPass,
   onOperatorReject,
   onBossPass,
@@ -653,6 +693,7 @@ function MaterialAuditModal({
   isOpen: boolean;
   onClose: () => void;
   apk: APKItem;
+  readOnly?: boolean;
   onOperatorPass: () => void;
   onOperatorReject: (reason: string) => void;
   onBossPass: () => void;
@@ -2480,33 +2521,36 @@ function APKDetailPage() {
         />
       )}
 
-      {/* 节点Modal - 通道发布审核 */}
-      {showNodeModal && selectedNodeIndex === 1 && apk.nodes[1].status !== 'completed' && (
+      {/* 节点Modal - 通道发布审核 (完成/拒绝/进行中都可查看) */}
+      {showNodeModal && selectedNodeIndex === 1 && (
         <ChannelAuditModal
           isOpen={showNodeModal}
           onClose={() => setShowNodeModal(false)}
           apk={apk}
+          readOnly={apk.nodes[1].status === 'completed'}
           onPass={() => { console.log('审核通过'); setShowNodeModal(false); }}
           onReject={(reason) => { console.log('审核拒绝:', reason); setShowNodeModal(false); }}
         />
       )}
 
       {/* 节点Modal - 物料上传 */}
-      {showNodeModal && selectedNodeIndex === 2 && apk.nodes[2].status !== 'completed' && (
+      {showNodeModal && selectedNodeIndex === 2 && (
         <MaterialUploadModal
           isOpen={showNodeModal}
           onClose={() => setShowNodeModal(false)}
           apk={apk}
+          readOnly={apk.nodes[2].status === 'completed'}
           onSave={handleSaveNode}
         />
       )}
 
-      {/* 节点Modal - 物料审核 */}
-      {showNodeModal && selectedNodeIndex === 3 && apk.nodes[3].status !== 'completed' && (
+      {/* 节点Modal - 物料审核 (完成/拒绝/进行中都可查看) */}
+      {showNodeModal && selectedNodeIndex === 3 && (
         <MaterialAuditModal
           isOpen={showNodeModal}
           onClose={() => setShowNodeModal(false)}
           apk={apk}
+          readOnly={apk.nodes[3].status === 'completed'}
           onOperatorPass={() => { console.log('运营通过'); setShowNodeModal(false); }}
           onOperatorReject={(reason) => { console.log('运营拒绝:', reason); setShowNodeModal(false); }}
           onBossPass={() => { console.log('老板通过'); setShowNodeModal(false); }}
