@@ -867,55 +867,57 @@ function MaterialAuditModal({
               <h4 className="font-medium mb-4">物料上传详情 (只读)</h4>
               
               {activeTab === 'basic' && (
-              <div>
-              <div className="mb-4">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">应用信息</h5>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">应用名称</div>
-                    <div className="font-medium">{apk.appName}</div>
+                <div>
+                  <div className="mb-4">
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">应用信息</h5>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">应用名称</div>
+                        <div className="font-medium">{apk.appName}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">应用包名</div>
+                        <div className="font-medium">{apk.packageName}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">版本号</div>
+                        <div className="font-medium">v{apk.versionCode}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">应用包名</div>
-                    <div className="font-medium">{apk.packageName}</div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">版本号</div>
-                    <div className="font-medium">v{apk.versionCode}</div>
-                  </div>
-                </div>
-              </div>
 
-              {/* 物料信息 */}
-              <div>
-                <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">应用名称</div>
-                    <div className="font-medium">Spotify Music</div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">一句话描述</div>
-                    <div className="font-medium">音乐播放器</div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded col-span-2">
-                    <div className="text-gray-500">产品详情</div>
-                    <div className="font-medium">音乐播放应用</div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded col-span-2">
-                    <div className="text-gray-500">关键词</div>
-                    <div className="font-medium">music, streaming, audio, player</div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">是否GP上架</div>
-                    <div className="font-medium">是</div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-gray-500">GP链接</div>
-                    <div className="font-medium text-blue-600">https://play.google.com/store/apps...</div>
+                  {/* 物料信息 */}
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">应用名称</div>
+                        <div className="font-medium">Spotify Music</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">一句话描述</div>
+                        <div className="font-medium">音乐播放器</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded col-span-2">
+                        <div className="text-gray-500">产品详情</div>
+                        <div className="font-medium">音乐播放应用</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded col-span-2">
+                        <div className="text-gray-500">关键词</div>
+                        <div className="font-medium">music, streaming, audio, player</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">是否GP上架</div>
+                        <div className="font-medium">是</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">GP链接</div>
+                        <div className="font-medium text-blue-600">https://play.google.com/store/apps...</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               {/* 截图素材 */}
               {activeTab === 'screenshots' && (
