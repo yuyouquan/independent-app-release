@@ -162,7 +162,16 @@ export const mockApplications: Application[] = [
               updateDescription: 'Bug fixes',
               keywords: ['music', 'streaming', 'audio'],
               isGP上架: true,
-              gpLink: 'https://play.google.com/store/apps/details?id=com.spotify.music'
+              gpLink: 'https://play.google.com/store/apps/details?id=com.spotify.music',
+              icon: 'https://placehold.co/128x128/1DB954/ffffff?text=Spotify',
+              heroImage: 'https://placehold.co/400x200/1DB954/ffffff?text=Spotify+Hero',
+              screenshots: [
+                'https://placehold.co/200x400/1DB954/ffffff?text=Screen1',
+                'https://placehold.co/200x400/1DB954/ffffff?text=Screen2',
+                'https://placehold.co/200x400/1DB954/ffffff?text=Screen3',
+                'https://placehold.co/200x400/1DB954/ffffff?text=Screen4',
+                'https://placehold.co/200x400/1DB954/ffffff?text=Screen5'
+              ]
             }
           }
         }
@@ -215,7 +224,16 @@ export const mockApplications: Application[] = [
               productDetail: 'Fast messaging',
               updateDescription: 'New features',
               keywords: ['message', 'chat'],
-              isGP上架: false
+              isGP上架: false,
+              icon: 'https://placehold.co/128x128/26A5E4/ffffff?text=TG',
+              heroImage: 'https://placehold.co/400x200/26A5E4/ffffff?text=Telegram+Hero',
+              screenshots: [
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Chat1',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Chat2',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Chat3',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Chat4',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Chat5'
+              ]
             }
           }
         },
@@ -244,11 +262,20 @@ export const mockApplications: Application[] = [
           materials: {
             en: {
               appName: 'Telegram',
-              shortDescription: 'Messaging app',
-              productDetail: 'Fast messaging',
-              updateDescription: 'New features',
-              keywords: ['message', 'chat'],
-              isGP上架: false
+              shortDescription: 'Messaging app upload',
+              productDetail: 'Fast messaging upload',
+              updateDescription: 'New features upload',
+              keywords: ['message', 'chat', 'upload'],
+              isGP上架: false,
+              icon: 'https://placehold.co/128x128/26A5E4/ffffff?text=TG+U',
+              heroImage: 'https://placehold.co/400x200/26A5E4/ffffff?text=Telegram+Upload',
+              screenshots: [
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Upload1',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Upload2',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Upload3',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Upload4',
+                'https://placehold.co/200x400/26A5E4/ffffff?text=Upload5'
+              ]
             }
           }
         }
