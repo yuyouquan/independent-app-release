@@ -764,6 +764,7 @@ function MaterialUploadModal({
         <div className="p-6 overflow-y-auto max-h-[50vh]">
           {activeTab === 'basic' && (
             <div className="space-y-6">
+              {/* 应用基本信息 - 与申请Modal一致 */}
               <div>
                 <h4 className="font-medium mb-4 flex items-center gap-2">
                   <FileText className="w-4 h-4" />
@@ -795,6 +796,17 @@ function MaterialUploadModal({
                     </select>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用APK</label>
+                    <input type="text" value={`${apk.appName}.apk`} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">应用测试PASS报告</label>
+                    <div className="border-2 border-dashed rounded-lg p-3 text-center hover:bg-gray-50 cursor-pointer">
+                      <Upload className="w-6 h-6 mx-auto text-gray-400" />
+                      <p className="text-sm text-gray-500 mt-1">点击上传测试报告</p>
+                    </div>
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">应用分类 <span className="text-red-500">*</span></label>
                     <select 
                       className="w-full border rounded px-3 py-2"
@@ -819,6 +831,97 @@ function MaterialUploadModal({
                       </label>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* 发布范围 - 与申请Modal一致 */}
+              <div>
+                <h4 className="font-medium mb-4">发布范围</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发布国家</label>
+                    <select className="w-full border rounded px-3 py-2">
+                      <option value="all">全部</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
+                    <select className="w-full border rounded px-3 py-2">
+                      <option value="all">全部</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">发布机型</label>
+                    <select className="w-full border rounded px-3 py-2">
+                      <option value="all">全部</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">内测机型</label>
+                    <select className="w-full border rounded px-3 py-2">
+                      <option value="all">全部</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">适用安卓版本</label>
+                    <select className="w-full border rounded px-3 py-2">
+                      <option value="all">全部</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">适用tOS版本</label>
+                    <select className="w-full border rounded px-3 py-2">
+                      <option value="all">全部</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 过滤印度 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">是否需要过滤印度</label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="filterIndia" value="yes" checked={formData.filterIndia === 'yes'} onChange={(e) => setFormData({...formData, filterIndia: e.target.value})} />
+                    是
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input type="radio" name="filterIndia" value="no" checked={formData.filterIndia === 'no'} onChange={(e) => setFormData({...formData, filterIndia: e.target.value})} />
+                    否
+                  </label>
+                </div>
+              </div>
+
+              {/* PA更新 - 与申请Modal一致 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">是否PA应用更新</label>
+                <div className="flex gap-4 items-start">
+                  <div className="flex gap-4 mt-2">
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isPAUpdate" value="yes" checked={formData.isPAUpdate === 'yes'} onChange={(e) => setFormData({...formData, isPAUpdate: e.target.value})} />
+                      是
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input type="radio" name="isPAUpdate" value="no" checked={formData.isPAUpdate === 'no'} onChange={(e) => setFormData({...formData, isPAUpdate: e.target.value})} />
+                      否
+                    </label>
+                  </div>
+                  {formData.isPAUpdate === 'yes' && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2 items-center">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">灰度量级:</label>
+                        <input type="number" placeholder="最小值" className="border rounded px-2 py-1 w-20 text-sm" value={formData.grayScaleLevelMin} onChange={(e) => setFormData({...formData, grayScaleLevelMin: parseInt(e.target.value) || 0})} />
+                        <span className="text-gray-400">~</span>
+                        <input type="number" placeholder="最大值" className="border rounded px-2 py-1 w-20 text-sm" value={formData.grayScaleLevelMax} onChange={(e) => setFormData({...formData, grayScaleLevelMax: parseInt(e.target.value) || 0})} />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <label className="text-sm text-gray-600 whitespace-nowrap">生效时间:</label>
+                        <input type="date" className="border rounded px-2 py-1 text-sm" value={formData.effectiveTimeStart} onChange={(e) => setFormData({...formData, effectiveTimeStart: e.target.value})} />
+                        <span className="text-gray-400">~</span>
+                        <input type="date" className="border rounded px-2 py-1 text-sm" value={formData.effectiveTimeEnd} onChange={(e) => setFormData({...formData, effectiveTimeEnd: e.target.value})} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
