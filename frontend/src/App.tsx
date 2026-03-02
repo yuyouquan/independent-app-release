@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Eye, ChevronDown, ArrowLeft, CheckCircle, XCircle, Clock, AlertCircle, FileText, Upload, X } from 'lucide-react';
 import { mockApplications, mockTodos, shuttleOptions, tosVersionOptions, apkStatusOptions, Application, APKItem, TodoItem, ProcessNode } from './data/mockData';
@@ -2438,16 +2438,67 @@ function APKDetailPage() {
   // 找到当前进行中的节点
   const currentNodeIndex = apk.nodes.findIndex(n => n.status === 'processing' || n.status === 'rejected');
   
-  // 模拟历史操作记录
-  const historyRecords = [
-    { time: '2026-03-01 16:00:00', operator: '赵六', action: '完成', detail: '灰度监控节点已完成' },
-    { time: '2026-03-01 15:00:00', operator: '赵六', action: '完成', detail: '业务内测节点已完成' },
-    { time: '2026-03-01 14:00:00', operator: '赵六', action: '完成', detail: '应用上架节点已完成' },
-    { time: '2026-03-01 13:00:00', operator: '王五', action: '完成', detail: '物料审核节点已完成' },
-    { time: '2026-03-01 12:00:00', operator: '张三', action: '完成', detail: '物料上传节点已完成' },
-    { time: '2026-03-01 11:00:00', operator: '李四', action: '完成', detail: '通道发布审核节点已完成' },
-    { time: '2026-03-01 10:00:00', operator: '张三', action: '提交', detail: '通道发布申请节点已提交' },
-  ];
+  // 动态生成历史操作记录（基于节点数据）
+  const historyRecords = useMemo(() => {
+    const records: { time: string; operator: string; action: string; detail: string; status: string }[] = [];
+    
+    // 遍历所有节点，生成历史记录
+    apk.nodes.forEach((node, idx) => {
+      if (node.operatorTime) {
+        let action = '';
+        let detail = '';
+        let status = '';
+        
+        if (node.status === 'completed') {
+          action = idx === 0 ? '提交' : '审核通过';
+          detail = `${node.name}已完成`;
+          status = 'success';
+        } else if (node.status === 'rejected') {
+          action = '审核拒绝';
+          detail = `${node.name}被拒绝${node.rejectReason ? '：' + node.rejectReason : ''}`;
+          status = 'failed';
+        } else if (node.status === 'processing') {
+          action = '处理中';
+          detail = `${node.name}进行中`;
+          status = 'processing';
+        }
+        
+        if (action) {
+          records.push({
+            time: node.operatorTime,
+            operator: node.operator || '系统',
+            action,
+            detail,
+            status
+          });
+        }
+      }
+    });
+    
+    // 按时间倒序排列
+    return records.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  }, [apk.nodes]);
+
+  // 动态计算当前应用状态（基于节点状态）
+  const currentAppStatus = useMemo(() => {
+    const hasRejected = apk.nodes.some(n => n.status === 'rejected');
+    if (hasRejected) return 'failed';
+    
+    const hasProcessing = apk.nodes.some(n => n.status === 'processing');
+    if (hasProcessing) return 'processing';
+    
+    const allCompleted = apk.nodes.every(n => n.status === 'completed');
+    if (allCompleted) return 'success';
+    
+    return 'processing';
+  }, [apk.nodes]);
+
+  // 状态标签映射
+  const statusLabelMap = {
+    success: '已完成',
+    failed: '失败',
+    processing: '进行中'
+  };
 
   const handleNodeClick = (index: number) => {
     setSelectedNodeIndex(index);
@@ -2497,11 +2548,11 @@ function APKDetailPage() {
               </div>
             </div>
             <span className={`px-3 py-1 text-sm rounded-full ${
-              apk.status === 'success' ? 'bg-green-100 text-green-700' :
-              apk.status === 'failed' ? 'bg-red-100 text-red-700' :
+              currentAppStatus === 'success' ? 'bg-green-100 text-green-700' :
+              currentAppStatus === 'failed' ? 'bg-red-100 text-red-700' :
               'bg-blue-100 text-blue-700'
             }`}>
-              {apk.status === 'success' ? '已完成' : apk.status === 'failed' ? '失败' : '进行中'}
+              {statusLabelMap[currentAppStatus]}
             </span>
           </div>
         </div>
@@ -2581,11 +2632,15 @@ function APKDetailPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {historyRecords.map((record, idx) => (
-                    <tr key={idx}>
+                    <tr key={idx} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-500">{record.time}</td>
                       <td className="px-4 py-3 text-sm font-medium">{record.operator}</td>
                       <td className="px-4 py-3 text-sm">
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">{record.action}</span>
+                        <span className={`px-2 py-1 rounded text-xs ${
+                          record.status === 'success' ? 'bg-green-100 text-green-700' :
+                          record.status === 'failed' ? 'bg-red-100 text-red-700' :
+                          'bg-blue-100 text-blue-700'
+                        }`}>{record.action}</span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">{record.detail}</td>
                     </tr>

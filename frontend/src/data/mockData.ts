@@ -58,7 +58,7 @@ export const mockApplications: Application[] = [
         createTime: '2026-03-01 10:00:00',
         nodes: [
           { name: '通道发布申请', status: 'completed', operator: '张三', operatorTime: '2026-03-01 10:00:00' },
-          { name: '通道发布审核', status: 'processing', operator: '李四' },
+          { name: '通道发布审核', status: 'processing', operator: '李四', operatorTime: '2026-03-01 10:30:00' },
           { name: '物料上传', status: 'pending' },
           { name: '物料审核', status: 'pending' },
           { name: '应用上架', status: 'pending' },
@@ -100,8 +100,28 @@ export const mockApplications: Application[] = [
         nodes: [
           { name: '通道发布申请', status: 'completed', operator: '张三', operatorTime: '2026-03-01 10:00:00' },
           { name: '通道发布审核', status: 'completed', operator: '李四', operatorTime: '2026-03-01 11:00:00' },
-          { name: '物料上传', status: 'rejected', operator: '张三', operatorTime: '2026-03-01 12:00:00', rejectReason: '物料不符合要求' },
+          { name: '物料上传', status: 'rejected', operator: '张三', operatorTime: '2026-03-01 12:00:00', rejectReason: '物料不符合要求：截图尺寸不符合规范' },
           { name: '物料审核', status: 'pending' },
+          { name: '应用上架', status: 'pending' },
+          { name: '业务内测', status: 'pending' },
+          { name: '灰度监控', status: 'pending' },
+        ]
+      },
+      {
+        id: '4',
+        appIcon: '🎬',
+        appName: 'YouTube',
+        packageName: 'com.google.android.youtube',
+        appType: 'Video',
+        versionCode: '22652',
+        status: 'processing',
+        operator: '王五',
+        createTime: '2026-03-02 09:00:00',
+        nodes: [
+          { name: '通道发布申请', status: 'completed', operator: '王五', operatorTime: '2026-03-02 09:00:00' },
+          { name: '通道发布审核', status: 'completed', operator: '李四', operatorTime: '2026-03-02 09:30:00' },
+          { name: '物料上传', status: 'completed', operator: '王五', operatorTime: '2026-03-02 10:00:00' },
+          { name: '物料审核', status: 'processing', operator: '赵六', operatorTime: '2026-03-02 10:30:00' },
           { name: '应用上架', status: 'pending' },
           { name: '业务内测', status: 'pending' },
           { name: '灰度监控', status: 'pending' },
@@ -116,7 +136,28 @@ export const mockApplications: Application[] = [
     status: 'success',
     applicant: '李四',
     applyTime: '2026-02-28 09:00:00',
-    apps: []
+    apps: [
+      {
+        id: '5',
+        appIcon: '🛒',
+        appName: 'Shopee',
+        packageName: 'com.shopee.id',
+        appType: 'Shopping',
+        versionCode: '22640',
+        status: 'success',
+        operator: '李四',
+        createTime: '2026-02-28 09:00:00',
+        nodes: [
+          { name: '通道发布申请', status: 'completed', operator: '李四', operatorTime: '2026-02-28 09:00:00' },
+          { name: '通道发布审核', status: 'completed', operator: '王五', operatorTime: '2026-02-28 10:00:00' },
+          { name: '物料上传', status: 'completed', operator: '李四', operatorTime: '2026-02-28 11:00:00' },
+          { name: '物料审核', status: 'completed', operator: '赵六', operatorTime: '2026-02-28 12:00:00' },
+          { name: '应用上架', status: 'completed', operator: '赵六', operatorTime: '2026-02-28 13:00:00' },
+          { name: '业务内测', status: 'completed', operator: '赵六', operatorTime: '2026-02-28 14:00:00' },
+          { name: '灰度监控', status: 'completed', operator: '赵六', operatorTime: '2026-02-28 15:00:00' },
+        ]
+      }
+    ]
   },
   {
     id: '3',
@@ -125,7 +166,29 @@ export const mockApplications: Application[] = [
     status: 'failed',
     applicant: '王五',
     applyTime: '2026-02-25 14:00:00',
-    apps: []
+    apps: [
+      {
+        id: '6',
+        appIcon: '🎮',
+        appName: 'PUBG Mobile',
+        packageName: 'com.tencent.ig',
+        appType: 'Game',
+        versionCode: '22630',
+        status: 'failed',
+        operator: '王五',
+        createTime: '2026-02-25 14:00:00',
+        rejectReason: '应用分类不符合要求',
+        nodes: [
+          { name: '通道发布申请', status: 'completed', operator: '王五', operatorTime: '2026-02-25 14:00:00' },
+          { name: '通道发布审核', status: 'rejected', operator: '李四', operatorTime: '2026-02-25 15:00:00', rejectReason: '应用分类不符合目标市场要求' },
+          { name: '物料上传', status: 'pending' },
+          { name: '物料审核', status: 'pending' },
+          { name: '应用上架', status: 'pending' },
+          { name: '业务内测', status: 'pending' },
+          { name: '灰度监控', status: 'pending' },
+        ]
+      }
+    ]
   }
 ];
 
@@ -159,7 +222,26 @@ export const mockTodos: TodoItem[] = [
     currentNode: '物料上传',
     nodeStatus: 'rejected',
     operator: '张三',
-    rejectReason: '物料不符合要求',
+    rejectReason: '物料不符合要求：截图尺寸不符合规范',
+  },
+  {
+    id: '3',
+    appId: '4',
+    shuttleName: '班车20260301',
+    appName: 'YouTube',
+    currentNode: '物料审核',
+    nodeStatus: 'processing',
+    operator: '赵六',
+  },
+  {
+    id: '4',
+    appId: '6',
+    shuttleName: '班车20260225',
+    appName: 'PUBG Mobile',
+    currentNode: '通道发布申请',
+    nodeStatus: 'rejected',
+    operator: '王五',
+    rejectReason: '应用分类不符合目标市场要求',
   }
 ];
 
