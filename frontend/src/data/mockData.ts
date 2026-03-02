@@ -185,7 +185,73 @@ export const mockApplications: Application[] = [
           { name: '应用上架', status: 'completed', operator: '赵六', operatorTime: '2026-03-01 14:00:00' },
           { name: '业务内测', status: 'completed', operator: '赵六', operatorTime: '2026-03-01 15:00:00' },
           { name: '灰度监控', status: 'completed', operator: '赵六', operatorTime: '2026-03-01 16:00:00' },
-        ]
+        ],
+        applyInfo: {
+          versionCode: '22650',
+          appCategory: 'Social',
+          systemApp: 'no',
+          filterIndia: 'no',
+          countryType: 'all',
+          countryList: [],
+          brandType: 'all',
+          brandList: [],
+          deviceType: 'all',
+          deviceList: [],
+          betaDeviceType: 'all',
+          betaDeviceList: [],
+          androidVersionType: 'all',
+          androidVersionList: [],
+          tosVersionType: 'all',
+          tosVersionList: [],
+          isPAUpdate: 'no',
+          grayScaleLevelMin: 0,
+          grayScaleLevelMax: 0,
+          effectiveTimeStart: '',
+          effectiveTimeEnd: '',
+          materials: {
+            en: {
+              appName: 'Telegram',
+              shortDescription: 'Messaging app',
+              productDetail: 'Fast messaging',
+              updateDescription: 'New features',
+              keywords: ['message', 'chat'],
+              isGP上架: false
+            }
+          }
+        },
+        uploadInfo: {
+          versionCode: '22650',
+          appCategory: 'Social',
+          systemApp: 'no',
+          filterIndia: 'no',
+          countryType: 'all',
+          countryList: [],
+          brandType: 'all',
+          brandList: [],
+          deviceType: 'all',
+          deviceList: [],
+          betaDeviceType: 'all',
+          betaDeviceList: [],
+          androidVersionType: 'all',
+          androidVersionList: [],
+          tosVersionType: 'all',
+          tosVersionList: [],
+          isPAUpdate: 'no',
+          grayScaleLevelMin: 0,
+          grayScaleLevelMax: 0,
+          effectiveTimeStart: '',
+          effectiveTimeEnd: '',
+          materials: {
+            en: {
+              appName: 'Telegram',
+              shortDescription: 'Messaging app',
+              productDetail: 'Fast messaging',
+              updateDescription: 'New features',
+              keywords: ['message', 'chat'],
+              isGP上架: false
+            }
+          }
+        }
       },
       {
         id: '3',
