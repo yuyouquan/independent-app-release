@@ -534,35 +534,76 @@ function ChannelAuditModal({
             ))}
           </div>
           
-          {/* 当前语言的物料信息 - 与申请Modal一致，字段都不必填 */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">外应用名称</div>
-              <div className="font-medium">{apk.appName}</div>
+          {/* 当前语言的物料信息 - 与申请Modal一致 */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">外应用名称</div>
+                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.appName || apk.appName}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">一句话描述</div>
+                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.shortDescription || '-'}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded col-span-2">
+                <div className="text-gray-500">产品详情</div>
+                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.productDetail || '-'}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded col-span-2">
+                <div className="text-gray-500">更新说明</div>
+                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.updateDescription || '-'}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded col-span-2">
+                <div className="text-gray-500">关键词 (1-5个)</div>
+                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.keywords?.join(', ') || '-'}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">是否GP上架</div>
+                <div className="font-medium">{apk.applyInfo?.materials?.[activeLang]?.isGP上架 ? '是' : '否'}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-gray-500">GP链接</div>
+                <div className="font-medium text-blue-600">{apk.applyInfo?.materials?.[activeLang]?.gpLink || '-'}</div>
+              </div>
             </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">一句话描述</div>
-              <div className="font-medium">音乐播放器</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded col-span-2">
-              <div className="text-gray-500">产品详情</div>
-              <div className="font-medium">完整音乐播放器，支持离线播放</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded col-span-2">
-              <div className="text-gray-500">更新说明</div>
-              <div className="font-medium">性能优化，修复bug</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded col-span-2">
-              <div className="text-gray-500">关键词 (1-5个)</div>
-              <div className="font-medium">music, streaming, audio, player</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">是否GP上架</div>
-              <div className="font-medium">是</div>
-            </div>
-            <div className="p-3 bg-gray-50 rounded">
-              <div className="text-gray-500">GP链接</div>
-              <div className="font-medium text-blue-600">https://play.google.com/...</div>
+            
+            {/* 图片素材 */}
+            <div className="mt-4">
+              <h5 className="text-sm font-medium text-gray-700 mb-2">图片素材</h5>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">应用图标</div>
+                  <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
+                    {apk.applyInfo?.materials?.[activeLang]?.icon ? (
+                      <img src={apk.applyInfo.materials[activeLang].icon} alt="应用图标" className="w-12 h-12 object-contain" />
+                    ) : (
+                      <span className="text-gray-400 text-xs">未上传</span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">置顶大图</div>
+                  <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center">
+                    {apk.applyInfo?.materials?.[activeLang]?.heroImage ? (
+                      <img src={apk.applyInfo.materials[activeLang].heroImage} alt="置顶大图" className="w-20 h-12 object-contain" />
+                    ) : (
+                      <span className="text-gray-400 text-xs">未上传</span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-gray-500 mb-1">详情截图 ({apk.applyInfo?.materials?.[activeLang]?.screenshots?.length || 0}张)</div>
+                  <div className="border rounded-lg p-2 bg-gray-50 min-h-[80px] flex items-center justify-center flex-wrap gap-1">
+                    {apk.applyInfo?.materials?.[activeLang]?.screenshots?.length ? (
+                      apk.applyInfo.materials[activeLang].screenshots!.map((s, i) => (
+                        <img key={i} src={s} alt={`截图${i+1}`} className="w-8 h-12 object-cover" />
+                      ))
+                    ) : (
+                      <span className="text-gray-400 text-xs">未上传</span>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           </>
