@@ -717,16 +717,7 @@ function MaterialUploadModal({
   };
 
   const handleTabChange = (tab: 'basic' | 'material') => {
-    // 切换到物料Tab时先验证基础信息
-    if (activeTab === 'basic' && tab === 'material') {
-      const newErrors: Record<string, string> = {};
-      if (!formData.versionCode) newErrors.versionCode = '请选择应用版本号';
-      if (!formData.appCategory) newErrors.appCategory = '请选择应用分类';
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        return;
-      }
-    }
+    // 直接切换Tab，不再强制验证
     setActiveTab(tab);
     setErrors({});
   };
