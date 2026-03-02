@@ -12,6 +12,20 @@ export interface ProcessNode {
   rejectReason?: string;
 }
 
+// 物料信息（按语言）
+export interface MaterialInfo {
+  appName: string;
+  shortDescription: string;
+  productDetail: string;
+  updateDescription: string;
+  keywords: string[];
+  isGP上架: boolean;
+  gpLink?: string;
+  icon?: string;
+  heroImage?: string;
+  screenshots?: string[];
+}
+
 export interface APKItem {
   id: string;
   appIcon: string;
@@ -24,6 +38,58 @@ export interface APKItem {
   operator: string;
   rejectReason?: string;
   createTime: string;
+  
+  // 通道发布申请填写的详细信息
+  applyInfo?: {
+    versionCode: string;
+    appCategory: string;
+    systemApp: string;
+    filterIndia: string;
+    countryType: string;
+    countryList: string[];
+    brandType: string;
+    brandList: string[];
+    deviceType: string;
+    deviceList: string[];
+    betaDeviceType: string;
+    betaDeviceList: string[];
+    androidVersionType: string;
+    androidVersionList: string[];
+    tosVersionType: string;
+    tosVersionList: string[];
+    isPAUpdate: string;
+    grayScaleLevelMin: number;
+    grayScaleLevelMax: number;
+    effectiveTimeStart: string;
+    effectiveTimeEnd: string;
+    materials: Record<string, MaterialInfo>;
+  };
+  
+  // 物料上传填写的详细信息
+  uploadInfo?: {
+    versionCode: string;
+    appCategory: string;
+    systemApp: string;
+    filterIndia: string;
+    countryType: string;
+    countryList: string[];
+    brandType: string;
+    brandList: string[];
+    deviceType: string;
+    deviceList: string[];
+    betaDeviceType: string;
+    betaDeviceList: string[];
+    androidVersionType: string;
+    androidVersionList: string[];
+    tosVersionType: string;
+    tosVersionList: string[];
+    isPAUpdate: string;
+    grayScaleLevelMin: number;
+    grayScaleLevelMax: number;
+    effectiveTimeStart: string;
+    effectiveTimeEnd: string;
+    materials: Record<string, MaterialInfo>;
+  };
 }
 
 export interface Application {
@@ -64,7 +130,42 @@ export const mockApplications: Application[] = [
           { name: '应用上架', status: 'pending' },
           { name: '业务内测', status: 'pending' },
           { name: '灰度监控', status: 'pending' },
-        ]
+        ],
+        // 通道发布申请填写的详细信息
+        applyInfo: {
+          versionCode: '22651',
+          appCategory: 'Social',
+          systemApp: 'no',
+          filterIndia: 'no',
+          countryType: 'include',
+          countryList: ['USA', 'UK', 'Germany'],
+          brandType: 'include',
+          brandList: ['Tecno', 'Infinix'],
+          deviceType: 'include',
+          deviceList: ['X6841_H6941', 'X6858_H8917'],
+          betaDeviceType: 'all',
+          betaDeviceList: [],
+          androidVersionType: 'include',
+          androidVersionList: ['Android 14', 'Android 15'],
+          tosVersionType: 'include',
+          tosVersionList: ['tOS 15.2.0', 'tOS 16.1.0'],
+          isPAUpdate: 'yes',
+          grayScaleLevelMin: 1000,
+          grayScaleLevelMax: 50000,
+          effectiveTimeStart: '2026-03-05',
+          effectiveTimeEnd: '2026-03-31',
+          materials: {
+            en: {
+              appName: 'Spotify Music',
+              shortDescription: 'Music streaming app',
+              productDetail: 'Listen to music offline',
+              updateDescription: 'Bug fixes',
+              keywords: ['music', 'streaming', 'audio'],
+              isGP上架: true,
+              gpLink: 'https://play.google.com/store/apps/details?id=com.spotify.music'
+            }
+          }
+        }
       },
       {
         id: '2',

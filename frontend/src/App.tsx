@@ -443,55 +443,55 @@ function ChannelAuditModal({
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">版本号</div>
-                <div className="font-medium">v{apk.versionCode}</div>
+                <div className="font-medium">v{apk.applyInfo?.versionCode || apk.versionCode}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">应用分类</div>
-                <div className="font-medium">Social</div>
+                <div className="font-medium">{apk.applyInfo?.appCategory || '-'}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">系统应用</div>
-                <div className="font-medium">否</div>
+                <div className="font-medium">{apk.applyInfo?.systemApp === 'yes' ? '是' : '否'}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">发布国家</div>
-                <div className="font-medium">全球</div>
+                <div className="font-medium">{apk.applyInfo?.countryType === 'all' ? '全部' : (apk.applyInfo?.countryList?.join(', ') || '-')}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">品牌</div>
-                <div className="font-medium">全部</div>
+                <div className="font-medium">{apk.applyInfo?.brandType === 'all' ? '全部' : (apk.applyInfo?.brandList?.join(', ') || '-')}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">机型</div>
-                <div className="font-medium">全部</div>
+                <div className="font-medium">{apk.applyInfo?.deviceType === 'all' ? '全部' : (apk.applyInfo?.deviceList?.join(', ') || '-')}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">内测机型</div>
-                <div className="font-medium">-</div>
+                <div className="font-medium">{apk.applyInfo?.betaDeviceType === 'all' ? '全部' : (apk.applyInfo?.betaDeviceList?.join(', ') || '-')}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">安卓版本</div>
-                <div className="font-medium">全部</div>
+                <div className="font-medium">{apk.applyInfo?.androidVersionType === 'all' ? '全部' : (apk.applyInfo?.androidVersionList?.join(', ') || '-')}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">tOS版本</div>
-                <div className="font-medium">全部</div>
+                <div className="font-medium">{apk.applyInfo?.tosVersionType === 'all' ? '全部' : (apk.applyInfo?.tosVersionList?.join(', ') || '-')}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">过滤印度</div>
-                <div className="font-medium">否</div>
+                <div className="font-medium">{apk.applyInfo?.filterIndia === 'yes' ? '是' : '否'}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">是否PA更新</div>
-                <div className="font-medium">是</div>
+                <div className="font-medium">{apk.applyInfo?.isPAUpdate === 'yes' ? '是' : '否'}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">灰度量级</div>
-                <div className="font-medium">1000~100000/天</div>
+                <div className="font-medium">{apk.applyInfo?.grayScaleLevelMin || '-'}{apk.applyInfo?.grayScaleLevelMin ? '~/天 ~' : ''}{apk.applyInfo?.grayScaleLevelMax || '-'}{apk.applyInfo?.grayScaleLevelMax ? '/天' : ''}</div>
               </div>
               <div className="p-3 bg-gray-50 rounded">
                 <div className="text-gray-500">生效时间</div>
-                <div className="font-medium">2026/03/02~2026/03/30</div>
+                <div className="font-medium">{apk.applyInfo?.effectiveTimeStart || '-'}{apk.applyInfo?.effectiveTimeStart ? '~' : ''}{apk.applyInfo?.effectiveTimeEnd || '-'}</div>
               </div>
             </div>
           </div>
@@ -1211,42 +1211,86 @@ function MaterialAuditModal({
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
                         <div className="text-gray-500">版本号</div>
-                        <div className="font-medium">v{apk.versionCode}</div>
+                        <div className="font-medium">v{apk.uploadInfo?.versionCode || apk.applyInfo?.versionCode || apk.versionCode}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">应用分类</div>
+                        <div className="font-medium">{apk.uploadInfo?.appCategory || apk.applyInfo?.appCategory || '-'}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">系统应用</div>
+                        <div className="font-medium">{apk.uploadInfo?.systemApp === 'yes' ? '是' : (apk.applyInfo?.systemApp === 'yes' ? '是' : '否')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">发布国家</div>
+                        <div className="font-medium">{apk.uploadInfo?.countryType === 'all' ? '全部' : (apk.uploadInfo?.countryList?.join(', ') || apk.applyInfo?.countryType === 'all' ? '全部' : apk.applyInfo?.countryList?.join(', ') || '-')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">品牌</div>
+                        <div className="font-medium">{apk.uploadInfo?.brandType === 'all' ? '全部' : (apk.uploadInfo?.brandList?.join(', ') || apk.applyInfo?.brandType === 'all' ? '全部' : apk.applyInfo?.brandList?.join(', ') || '-')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">机型</div>
+                        <div className="font-medium">{apk.uploadInfo?.deviceType === 'all' ? '全部' : (apk.uploadInfo?.deviceList?.join(', ') || apk.applyInfo?.deviceType === 'all' ? '全部' : apk.applyInfo?.deviceList?.join(', ') || '-')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">安卓版本</div>
+                        <div className="font-medium">{apk.uploadInfo?.androidVersionType === 'all' ? '全部' : (apk.uploadInfo?.androidVersionList?.join(', ') || apk.applyInfo?.androidVersionType === 'all' ? '全部' : apk.applyInfo?.androidVersionList?.join(', ') || '-')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">tOS版本</div>
+                        <div className="font-medium">{apk.uploadInfo?.tosVersionType === 'all' ? '全部' : (apk.uploadInfo?.tosVersionList?.join(', ') || apk.applyInfo?.tosVersionType === 'all' ? '全部' : apk.applyInfo?.tosVersionList?.join(', ') || '-')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">过滤印度</div>
+                        <div className="font-medium">{apk.uploadInfo?.filterIndia === 'yes' ? '是' : (apk.applyInfo?.filterIndia === 'yes' ? '是' : '否')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">是否PA更新</div>
+                        <div className="font-medium">{apk.uploadInfo?.isPAUpdate === 'yes' ? '是' : (apk.applyInfo?.isPAUpdate === 'yes' ? '是' : '否')}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">灰度量级</div>
+                        <div className="font-medium">{apk.uploadInfo?.grayScaleLevelMin || '-'}{apk.uploadInfo?.grayScaleLevelMin ? '~/天 ~' : ''}{apk.uploadInfo?.grayScaleLevelMax || '-'}{apk.uploadInfo?.grayScaleLevelMax ? '/天' : (!apk.uploadInfo && apk.applyInfo) ? `${apk.applyInfo.grayScaleLevelMin || '-'}~/天 ~${apk.applyInfo.grayScaleLevelMax || '-'}${apk.applyInfo.grayScaleLevelMax ? '/天' : ''}` : ''}</div>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded">
+                        <div className="text-gray-500">生效时间</div>
+                        <div className="font-medium">{apk.uploadInfo?.effectiveTimeStart || '-'}{apk.uploadInfo?.effectiveTimeStart ? '~' : ''}{apk.uploadInfo?.effectiveTimeEnd || '-'}</div>
                       </div>
                     </div>
                   </div>
 
-                  {/* 物料信息 - 与申请Modal一致，只读展示 */}
+                  {/* 物料信息 - 与上传Modal一致，只读展示 */}
                   <div>
                     <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="p-3 bg-gray-50 rounded">
                         <div className="text-gray-500">外应用名称</div>
-                        <div className="font-medium">{apk.appName}</div>
+                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.appName || apk.applyInfo?.materials?.en?.appName || apk.appName}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
                         <div className="text-gray-500">一句话描述</div>
-                        <div className="font-medium">音乐播放器</div>
+                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.shortDescription || apk.applyInfo?.materials?.en?.shortDescription || '-'}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
                         <div className="text-gray-500">产品详情</div>
-                        <div className="font-medium">完整音乐播放器，支持离线播放</div>
+                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.productDetail || apk.applyInfo?.materials?.en?.productDetail || '-'}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
                         <div className="text-gray-500">更新说明</div>
-                        <div className="font-medium">性能优化，修复已知问题</div>
+                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.updateDescription || apk.applyInfo?.materials?.en?.updateDescription || '-'}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded col-span-2">
                         <div className="text-gray-500">关键词 (1-5个)</div>
-                        <div className="font-medium">music, streaming, audio, player</div>
+                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.keywords?.join(', ') || apk.applyInfo?.materials?.en?.keywords?.join(', ') || '-'}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
                         <div className="text-gray-500">是否GP上架</div>
-                        <div className="font-medium">是</div>
+                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.isGP上架 || apk.applyInfo?.materials?.en?.isGP上架 ? '是' : '否'}</div>
                       </div>
                       <div className="p-3 bg-gray-50 rounded">
                         <div className="text-gray-500">GP链接</div>
-                        <div className="font-medium text-blue-600">https://play.google.com/store/apps...</div>
+                        <div className="font-medium text-blue-600">{apk.uploadInfo?.materials?.en?.gpLink || apk.applyInfo?.materials?.en?.gpLink || '-'}</div>
                       </div>
                     </div>
                   </div>
