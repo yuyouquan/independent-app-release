@@ -3106,140 +3106,304 @@ function APKDetailPage() {
         />
       )}
 
-      {/* 节点Modal - 应用上架/业务内测/灰度监控 (只读展示) */}
-      {showNodeModal && selectedNodeIndex >= 4 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <div>
-                <h2 className="text-xl font-semibold">{NODE_NAMES[selectedNodeIndex]}</h2>
-                <p className="text-sm text-gray-500">{apk.appName}</p>
-              </div>
-              <button onClick={() => setShowNodeModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto max-h-[70vh]">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center gap-2 text-blue-700">
-                  <AlertCircle className="w-5 h-5" />
-                  <span>该节点数据来自第三方平台，仅供查看</span>
-                </div>
-              </div>
+    </div>
+  );
+}
 
-              {/* 应用上架 / 业务内测 数据展示 */}
-              {(selectedNodeIndex === 4 || selectedNodeIndex === 5) && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">状态</div>
-                      <div className="font-medium text-green-600">生效中</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">升级任务名称</div>
-                      <div className="font-medium">{apk.appName} - Google Play发布</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">应用包名</div>
-                      <div className="font-medium">{apk.packageName}</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">版本号</div>
-                      <div className="font-medium">v{apk.versionCode}</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">发布国家</div>
-                      <div className="font-medium">印度, 印尼, 巴基斯坦</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">发布品牌</div>
-                      <div className="font-medium">Tecno, Infinix, itel</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">发布机型</div>
-                      <div className="font-medium">X6841, X6858, KO5</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">语言</div>
-                      <div className="font-medium">英语, 印尼语, 泰语</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">安卓版本</div>
-                      <div className="font-medium">Android 11-15</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">tOS版本</div>
-                      <div className="font-medium">tOS 15.2.0+</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">灰度量级</div>
-                      <div className="font-medium">1000/天</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">分类</div>
-                      <div className="font-medium">Social</div>
-                    </div>
-                  </div>
-                  <div className="p-3 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500">生效时间</div>
-                    <div className="font-medium">2026-03-01 12:00:00</div>
-                  </div>
-                </div>
-              )}
+// ==================== 应用上架Modal (节点5) ====================
+function AppPublishModal({
+  isOpen,
+  onClose,
+  apk
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  apk: APKItem;
+}) {
+  const info = apk.uploadInfo || apk.applyInfo;
 
-              {/* 灰度监控数据展示 */}
-              {selectedNodeIndex === 6 && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">任务名称</div>
-                      <div className="font-medium">{apk.appName} - 灰度发布</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">生效时间</div>
-                      <div className="font-medium">2026-03-01 12:00:00</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">灰度量级</div>
-                      <div className="font-medium">1000/天</div>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded">
-                    <div className="text-xs text-gray-500 mb-2">现状/总计</div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500" style={{ width: '65%' }} />
-                      </div>
-                      <div className="font-medium">650 / 1000</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">状态</div>
-                      <div className="font-medium text-blue-600">进行中</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">创建时间</div>
-                      <div className="font-medium">2026-03-01 10:00:00</div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <div className="text-xs text-gray-500">完成时间</div>
-                      <div className="font-medium text-gray-400">预计 2026-03-02</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[4]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto max-h-[70vh]">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 text-blue-700">
+              <AlertCircle className="w-5 h-5" />
+              <span>该节点数据来自第三方平台，仅供查看</span>
             </div>
-            <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
-              <button onClick={() => setShowNodeModal(false)} className="px-4 py-2 border rounded-lg hover:bg-gray-100">关闭</button>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">状态</div>
+                <div className={`font-medium ${apk.nodes[4]?.status === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>
+                  {apk.nodes[4]?.status === 'completed' ? '已生效' : '待生效'}
+                </div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">升级任务名称</div>
+                <div className="font-medium">{apk.appName} - 通道发布</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">应用包名</div>
+                <div className="font-medium">{apk.packageName}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">版本号</div>
+                <div className="font-medium">v{info?.versionCode || apk.versionCode}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">发布国家</div>
+                <div className="font-medium">{info?.countryType === 'all' ? '全部' : (info?.countryList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">发布品牌</div>
+                <div className="font-medium">{info?.brandType === 'all' ? '全部' : (info?.brandList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">发布机型</div>
+                <div className="font-medium">{info?.deviceType === 'all' ? '全部' : (info?.deviceList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">语言</div>
+                <div className="font-medium">{info?.materials ? Object.keys(info.materials).join(', ') : '英语'}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">安卓版本</div>
+                <div className="font-medium">{info?.androidVersionType === 'all' ? '全部' : (info?.androidVersionList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">tOS版本</div>
+                <div className="font-medium">{info?.tosVersionType === 'all' ? '全部' : (info?.tosVersionList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">灰度量级</div>
+                <div className="font-medium">{info?.grayScaleLevelMin || 0} ~ {info?.grayScaleLevelMax || 0}/天</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">分类</div>
+                <div className="font-medium">{info?.appCategory || '-'}</div>
+              </div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded">
+              <div className="text-xs text-gray-500">生效时间</div>
+              <div className="font-medium">{info?.effectiveTimeStart || '-'} ~ {info?.effectiveTimeEnd || '-'}</div>
             </div>
           </div>
         </div>
-      )}
+
+        <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">关闭</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== 业务内测Modal (节点6) ====================
+function BetaTestModal({
+  isOpen,
+  onClose,
+  apk
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  apk: APKItem;
+}) {
+  const info = apk.uploadInfo || apk.applyInfo;
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[5]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto max-h-[70vh]">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 text-blue-700">
+              <AlertCircle className="w-5 h-5" />
+              <span>该节点数据来自第三方平台，仅供查看</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">状态</div>
+                <div className={`font-medium ${apk.nodes[5]?.status === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>
+                  {apk.nodes[5]?.status === 'completed' ? '已完成' : apk.nodes[5]?.status === 'rejected' ? '已拒绝' : '进行中'}
+                </div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">升级任务名称</div>
+                <div className="font-medium">{apk.appName} - 业务内测</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">应用包名</div>
+                <div className="font-medium">{apk.packageName}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">版本号</div>
+                <div className="font-medium">v{info?.versionCode || apk.versionCode}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">发布国家</div>
+                <div className="font-medium">{info?.betaDeviceType === 'all' ? '全部' : (info?.betaDeviceList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">内测机型</div>
+                <div className="font-medium">{info?.betaDeviceType === 'all' ? '全部' : (info?.betaDeviceList?.join(', ') || '-')}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">灰度量级</div>
+                <div className="font-medium">{info?.grayScaleLevelMin || 0} ~ {info?.grayScaleLevelMax || 0}/天</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">生效时间</div>
+                <div className="font-medium">{info?.effectiveTimeStart || '-'}</div>
+              </div>
+            </div>
+            
+            {/* 拒绝原因展示 */}
+            {apk.nodes[5]?.status === 'rejected' && apk.nodes[5]?.rejectReason && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="text-xs text-red-600 font-medium mb-1">拒绝原因</div>
+                <div className="text-red-700">{apk.nodes[5].rejectReason}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">关闭</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== 灰度监控Modal (节点7) ====================
+function GrayScaleModal({
+  isOpen,
+  onClose,
+  apk
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  apk: APKItem;
+}) {
+  const info = apk.uploadInfo || apk.applyInfo;
+  
+  // 模拟灰度进度数据
+  const grayScaleProgress = 65;
+  const grayScaleTotal = info?.grayScaleLevelMax || 1000;
+  const grayScaleCurrent = Math.floor(grayScaleTotal * grayScaleProgress / 100);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div>
+            <h2 className="text-xl font-semibold">{NODE_NAMES[6]}</h2>
+            <p className="text-sm text-gray-500">{apk.appName}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto max-h-[70vh]">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 text-blue-700">
+              <AlertCircle className="w-5 h-5" />
+              <span>该节点数据来自第三方平台，仅供查看</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">任务名称</div>
+                <div className="font-medium">{apk.appName} - 灰度发布</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">生效时间</div>
+                <div className="font-medium">{info?.effectiveTimeStart || '-'}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">灰度量级</div>
+                <div className="font-medium">{info?.grayScaleLevelMin || 0} ~ {info?.grayScaleLevelMax || 0}/天</div>
+              </div>
+            </div>
+            
+            {/* 进度条 */}
+            <div className="p-4 bg-gray-50 rounded">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-600">现状/总计</span>
+                <span className="font-medium">{grayScaleCurrent} / {grayScaleTotal}</span>
+              </div>
+              <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500" 
+                  style={{ width: `${grayScaleProgress}%` }} 
+                />
+              </div>
+              <div className="text-xs text-gray-500 mt-2 text-right">{grayScaleProgress}% 完成</div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">状态</div>
+                <div className={`font-medium ${apk.nodes[6]?.status === 'completed' ? 'text-green-600' : 'text-blue-600'}`}>
+                  {apk.nodes[6]?.status === 'completed' ? '已完成' : '进行中'}
+                </div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">创建时间</div>
+                <div className="font-medium">{apk.nodes[6]?.operatorTime || apk.createTime}</div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <div className="text-xs text-gray-500">应用包名</div>
+                <div className="font-medium">{apk.packageName}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end px-6 py-4 border-t bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">关闭</button>
+        </div>
+      </div>
     </div>
   );
 }
