@@ -1107,9 +1107,8 @@ function MaterialAuditModal({
 
   const handleOperatorSubmit = () => {
     if (operatorResult === 'pass') {
-      // 运营通过：关闭弹窗，飞书通知老板审核
-      onOperatorPass();
-      onClose();
+      // 运营通过：切换到老板审核步骤
+      setStep('boss');
     } else if (operatorResult === 'reject' && rejectReason) {
       // 运营拒绝：关闭弹窗，飞书通知申请人，流程回退到物料上传
       onOperatorReject(rejectReason);
