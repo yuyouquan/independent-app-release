@@ -2244,7 +2244,7 @@ function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-900">独立三方应用发布系统</h1>
-              <span className="ml-2 text-xs text-gray-500">v1.1 (迭代增强版)</span>
+              <span className="ml-2 text-xs text-gray-500">v3.2 (2026-03-04)</span>
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-500 hover:text-gray-700 text-sm">通知</button>
