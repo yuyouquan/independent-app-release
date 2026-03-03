@@ -571,8 +571,26 @@ function ChannelAuditModal({
           )}
         </div>
 
+        {/* Tab切换按钮 */}
+        <div className="px-6 py-3 border-b bg-gray-50">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              基础信息 <span className="text-red-500 ml-1">*</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('material')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              所需物料 <span className="text-red-500 ml-1">*</span>
+            </button>
+          </div>
+        </div>
+
         {/* 通道发布详情 - 只读表单 */}
-        <div className="p-6 overflow-y-auto max-h-[50vh]">
+        <div className="p-6 overflow-y-auto max-h-[40vh]">
           <ReadOnlyChannelForm 
             apk={apk} 
             activeTab={activeTab} 
@@ -1082,6 +1100,8 @@ function MaterialAuditModal({
   const [bossResult, setBossResult] = useState<'pass' | 'reject' | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [activeTab, setActiveTab] = useState<'basic' | 'material'>('basic');
+  const [activeLang, setActiveLang] = useState('en');
+  const [availableLangs, setAvailableLangs] = useState(['en']);
 
   if (!isOpen) return null;
 
@@ -1101,6 +1121,9 @@ function MaterialAuditModal({
     }
   };
 
+  // 只读模式判断
+  const isReadOnly = readOnly || apk.nodes[3]?.status === 'completed';
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
@@ -1115,219 +1138,149 @@ function MaterialAuditModal({
           </button>
         </div>
 
-        {/* Step indicator */}
-        <div className="px-6 py-3 bg-gray-50 border-b">
-          <div className="flex items-center gap-4">
-            <div className={`flex items-center gap-2 ${step === 'operator' ? 'text-blue-600 font-medium' : 'text-green-600'}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'operator' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'}`}>
-                {step === 'boss' ? '✓' : '1'}
+        {/* 只读模式不显示Step indicator */}
+        {!isReadOnly && (
+          <div className="px-6 py-3 bg-gray-50 border-b">
+            <div className="flex items-center gap-4">
+              <div className={`flex items-center gap-2 ${step === 'operator' ? 'text-blue-600 font-medium' : 'text-green-600'}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'operator' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'}`}>
+                  {step === 'boss' ? '✓' : '1'}
+                </div>
+                运营人员审核
               </div>
-              运营人员审核
-            </div>
-            <div className="flex-1 h-0.5 bg-gray-300" />
-            <div className={`flex items-center gap-2 ${step === 'boss' ? 'text-blue-600 font-medium' : step === 'operator' ? 'text-gray-400' : 'text-green-600'}`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'boss' ? 'bg-blue-600 text-white' : step === 'operator' ? 'bg-gray-300 text-gray-500' : 'bg-green-600 text-white'}`}>
-                {step === 'operator' ? '2' : '✓'}
+              <div className="flex-1 h-0.5 bg-gray-300" />
+              <div className={`flex items-center gap-2 ${step === 'boss' ? 'text-blue-600 font-medium' : step === 'operator' ? 'text-gray-400' : 'text-green-600'}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'boss' ? 'bg-blue-600 text-white' : step === 'operator' ? 'bg-gray-300 text-gray-500' : 'bg-green-600 text-white'}`}>
+                  {step === 'operator' ? '2' : '✓'}
+                </div>
+                老板审核
               </div>
-              老板审核
             </div>
           </div>
-        </div>
+        )}
+
+        {/* 审核结果展示 - 只读模式 */}
+        {isReadOnly && (
+          <div className="px-6 py-4 bg-gray-50 border-b">
+            <div className="flex items-center gap-4">
+              {apk.nodes[3]?.status === 'completed' ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">已通过</span>
+                </div>
+              ) : apk.nodes[3]?.status === 'rejected' ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <XCircle className="w-5 h-5" />
+                  <span className="font-medium">未通过</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Clock className="w-5 h-5" />
+                  <span className="font-medium">进行中</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 审核表单 */}
         {step === 'operator' && (
           <>
-            <div className="px-6 py-4 border-b">
-              <h4 className="font-medium mb-3">运营人员审核结果 <span className="text-red-500">*</span></h4>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="operatorResult"
-                    checked={operatorResult === 'pass'}
-                    onChange={() => setOperatorResult('pass')}
-                    className="w-4 h-4 text-green-600"
-                  />
-                  <span className="text-green-700 font-medium">通过</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="operatorResult"
-                    checked={operatorResult === 'reject'}
-                    onChange={() => setOperatorResult('reject')}
-                    className="w-4 h-4 text-red-600"
-                  />
-                  <span className="text-red-700 font-medium">不通过</span>
-                </label>
-              </div>
-              {operatorResult === 'reject' && (
-                <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
-                  <textarea
-                    className="w-full border rounded-lg px-3 py-2"
-                    rows={3}
-                    placeholder="请填写拒绝原因"
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                  />
+            {/* 只读模式不显示审核结果选择 */}
+            {!isReadOnly && (
+              <div className="px-6 py-4 border-b">
+                <h4 className="font-medium mb-3">运营人员审核结果 <span className="text-red-500">*</span></h4>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="operatorResult"
+                      checked={operatorResult === 'pass'}
+                      onChange={() => setOperatorResult('pass')}
+                      className="w-4 h-4 text-green-600"
+                    />
+                    <span className="text-green-700 font-medium">通过</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="operatorResult"
+                      checked={operatorResult === 'reject'}
+                      onChange={() => setOperatorResult('reject')}
+                      className="w-4 h-4 text-red-600"
+                    />
+                    <span className="text-red-700 font-medium">不通过</span>
+                  </label>
                 </div>
-              )}
+                {operatorResult === 'reject' && (
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
+                    <textarea
+                      className="w-full border rounded-lg px-3 py-2"
+                      rows={3}
+                      placeholder="请填写拒绝原因"
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab切换按钮 */}
+            <div className="px-6 py-3 border-b bg-gray-50">
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setActiveTab('basic')}
+                  className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+                >
+                  基础信息 <span className="text-red-500 ml-1">*</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab('material')}
+                  className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+                >
+                  所需物料 <span className="text-red-500 ml-1">*</span>
+                </button>
+              </div>
             </div>
 
             <div className="p-6 overflow-y-auto max-h-[40vh]">
-              {/* Tab切换 - 物料详情 */}
-              <div className="mb-4">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setActiveTab('basic')}
-                    className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-                  >
-                    基础物料
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('material')}
-                    className={`px-4 py-2 rounded-lg text-sm ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-                  >
-                    物料信息
-                  </button>
-                </div>
-              </div>
-
-              <h4 className="font-medium mb-4">物料上传详情 (只读)</h4>
-              
-              {activeTab === 'basic' && (
-                <div>
-                  <div className="mb-4">
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">应用信息</h5>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">应用名称</div>
-                        <div className="font-medium">{apk.appName}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">应用包名</div>
-                        <div className="font-medium">{apk.packageName}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">版本号</div>
-                        <div className="font-medium">v{apk.uploadInfo?.versionCode || apk.applyInfo?.versionCode || apk.versionCode}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">应用分类</div>
-                        <div className="font-medium">{apk.uploadInfo?.appCategory || apk.applyInfo?.appCategory || '-'}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">系统应用</div>
-                        <div className="font-medium">{apk.uploadInfo?.systemApp === 'yes' ? '是' : (apk.applyInfo?.systemApp === 'yes' ? '是' : '否')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">发布国家</div>
-                        <div className="font-medium">{apk.uploadInfo?.countryType === 'all' ? '全部' : (apk.uploadInfo?.countryList?.join(', ') || apk.applyInfo?.countryType === 'all' ? '全部' : apk.applyInfo?.countryList?.join(', ') || '-')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">品牌</div>
-                        <div className="font-medium">{apk.uploadInfo?.brandType === 'all' ? '全部' : (apk.uploadInfo?.brandList?.join(', ') || apk.applyInfo?.brandType === 'all' ? '全部' : apk.applyInfo?.brandList?.join(', ') || '-')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">机型</div>
-                        <div className="font-medium">{apk.uploadInfo?.deviceType === 'all' ? '全部' : (apk.uploadInfo?.deviceList?.join(', ') || apk.applyInfo?.deviceType === 'all' ? '全部' : apk.applyInfo?.deviceList?.join(', ') || '-')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">安卓版本</div>
-                        <div className="font-medium">{apk.uploadInfo?.androidVersionType === 'all' ? '全部' : (apk.uploadInfo?.androidVersionList?.join(', ') || apk.applyInfo?.androidVersionType === 'all' ? '全部' : apk.applyInfo?.androidVersionList?.join(', ') || '-')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">tOS版本</div>
-                        <div className="font-medium">{apk.uploadInfo?.tosVersionType === 'all' ? '全部' : (apk.uploadInfo?.tosVersionList?.join(', ') || apk.applyInfo?.tosVersionType === 'all' ? '全部' : apk.applyInfo?.tosVersionList?.join(', ') || '-')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">过滤印度</div>
-                        <div className="font-medium">{apk.uploadInfo?.filterIndia === 'yes' ? '是' : (apk.applyInfo?.filterIndia === 'yes' ? '是' : '否')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">是否PA更新</div>
-                        <div className="font-medium">{apk.uploadInfo?.isPAUpdate === 'yes' ? '是' : (apk.applyInfo?.isPAUpdate === 'yes' ? '是' : '否')}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">灰度量级</div>
-                        <div className="font-medium">{apk.uploadInfo?.grayScaleLevelMin || '-'}{apk.uploadInfo?.grayScaleLevelMin ? '~/天 ~' : ''}{apk.uploadInfo?.grayScaleLevelMax || '-'}{apk.uploadInfo?.grayScaleLevelMax ? '/天' : (!apk.uploadInfo && apk.applyInfo) ? `${apk.applyInfo.grayScaleLevelMin || '-'}~/天 ~${apk.applyInfo.grayScaleLevelMax || '-'}${apk.applyInfo.grayScaleLevelMax ? '/天' : ''}` : ''}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">生效时间</div>
-                        <div className="font-medium">{apk.uploadInfo?.effectiveTimeStart || '-'}{apk.uploadInfo?.effectiveTimeStart ? '~' : ''}{apk.uploadInfo?.effectiveTimeEnd || '-'}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 物料信息 - 与上传Modal一致，只读展示 */}
-                  <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">物料信息 (英语)</h5>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">外应用名称</div>
-                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.appName || apk.applyInfo?.materials?.en?.appName || apk.appName}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">一句话描述</div>
-                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.shortDescription || apk.applyInfo?.materials?.en?.shortDescription || '-'}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">产品详情</div>
-                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.productDetail || apk.applyInfo?.materials?.en?.productDetail || '-'}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">更新说明</div>
-                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.updateDescription || apk.applyInfo?.materials?.en?.updateDescription || '-'}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded col-span-2">
-                        <div className="text-gray-500">关键词 (1-5个)</div>
-                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.keywords?.join(', ') || apk.applyInfo?.materials?.en?.keywords?.join(', ') || '-'}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">是否GP上架</div>
-                        <div className="font-medium">{apk.uploadInfo?.materials?.en?.isGP上架 || apk.applyInfo?.materials?.en?.isGP上架 ? '是' : '否'}</div>
-                      </div>
-                      <div className="p-3 bg-gray-50 rounded">
-                        <div className="text-gray-500">GP链接</div>
-                        <div className="font-medium text-blue-600">{apk.uploadInfo?.materials?.en?.gpLink || apk.applyInfo?.materials?.en?.gpLink || '-'}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* 物料信息 */}
-              {activeTab === 'material' && (
-              <div>
-                <h5 className="text-sm font-medium text-gray-700 mb-2">应用截图 (5张)</h5>
-                <div className="grid grid-cols-5 gap-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="aspect-[9:16] bg-gray-100 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400">截图{i}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-2 text-sm text-gray-500">应用图标: 已上传 ✓</div>
-                <div className="mt-2 text-sm text-gray-500">置顶大图: 已上传 ✓</div>
-              </div>
-              )}
-              </div>
-
-            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-              <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
-              <button
-                onClick={handleOperatorSubmit}
-                disabled={!operatorResult || (operatorResult === 'reject' && !rejectReason)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                确认
-              </button>
+              {/* 使用只读物料表单组件 */}
+              <ReadOnlyMaterialForm 
+                apk={apk}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                activeLang={activeLang}
+                setActiveLang={setActiveLang}
+                availableLangs={availableLangs}
+              />
             </div>
+
+            {/* 只读模式显示关闭按钮 */}
+            {isReadOnly ? (
+              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+                <button onClick={onClose} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  关闭
+                </button>
+              </div>
+            ) : (
+              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+                <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
+                <button
+                  onClick={handleOperatorSubmit}
+                  disabled={!operatorResult || (operatorResult === 'reject' && !rejectReason)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  确认
+                </button>
+              </div>
+            )}
           </>
         )}
 
-        {step === 'boss' && (
+        {/* 只读模式不显示老板审核步骤 */}
+        {!isReadOnly && step === 'boss' && (
           <>
             <div className="px-6 py-4 border-b">
               <h4 className="font-medium mb-3">老板审核结果 <span className="text-red-500">*</span></h4>
