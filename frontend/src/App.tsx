@@ -1608,182 +1608,212 @@ function ChannelApplyModal({
                 <h4 className="font-medium mb-4">发布范围</h4>
                 <div className="grid grid-cols-2 gap-4">
                   {/* 发布国家 */}
-                  <div className="relative">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布国家</label>
-                    <select 
-                      className="w-full border rounded px-3 py-2"
-                      value={formData.countryType}
-                      onChange={(e) => {
-                        setFormData({...formData, countryType: e.target.value, countryList: []});
-                        setShowCountryDropdown(e.target.value !== 'all');
-                      }}
-                    >
-                      <option value="all">全部</option>
-                      <option value="include">包含</option>
-                      <option value="exclude">不包含</option>
-                    </select>
-                    {showCountryDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
-                        {countryOptions.map(c => (
-                          <label key={c} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" checked={formData.countryList.includes(c)} onChange={() => toggleMultiSelect('countryList', c, formData.countryList)} />
-                            <span className="text-sm">{c}</span>
-                          </label>
-                        ))}
+                    <div className="flex gap-2">
+                      <select 
+                        className="w-24 border rounded px-2 py-2"
+                        value={formData.countryType}
+                        onChange={(e) => {
+                          setFormData({...formData, countryType: e.target.value, countryList: []});
+                        }}
+                      >
+                        <option value="all">全部</option>
+                        <option value="include">包含</option>
+                        <option value="exclude">不包含</option>
+                      </select>
+                      <div className={`flex-1 border rounded p-2 max-h-32 overflow-auto ${formData.countryType === 'all' ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                        {formData.countryType === 'all' ? (
+                          <div className="text-xs text-gray-400 text-center py-2">选择"包含"或"不包含"后可选择</div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {countryOptions.map(c => (
+                              <label key={c} className="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={formData.countryList.includes(c)} onChange={() => toggleMultiSelect('countryList', c, formData.countryList)} />
+                                <span className="text-sm">{c}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {formData.countryType !== 'all' && formData.countryList.length > 0 && (
                       <div className="mt-1 text-xs text-gray-500">已选: {formData.countryList.join(', ')}</div>
                     )}
                   </div>
 
                   {/* 发布品牌 */}
-                  <div className="relative">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布品牌</label>
-                    <select 
-                      className="w-full border rounded px-3 py-2"
-                      value={formData.brandType}
-                      onChange={(e) => {
-                        setFormData({...formData, brandType: e.target.value, brandList: []});
-                        setShowBrandDropdown(e.target.value !== 'all');
-                      }}
-                    >
-                      <option value="all">全部</option>
-                      <option value="include">包含</option>
-                      <option value="exclude">不包含</option>
-                    </select>
-                    {showBrandDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
-                        {brandOptions.map(b => (
-                          <label key={b} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" checked={formData.brandList.includes(b)} onChange={() => toggleMultiSelect('brandList', b, formData.brandList)} />
-                            <span className="text-sm">{b}</span>
-                          </label>
-                        ))}
+                    <div className="flex gap-2">
+                      <select 
+                        className="w-24 border rounded px-2 py-2"
+                        value={formData.brandType}
+                        onChange={(e) => {
+                          setFormData({...formData, brandType: e.target.value, brandList: []});
+                        }}
+                      >
+                        <option value="all">全部</option>
+                        <option value="include">包含</option>
+                        <option value="exclude">不包含</option>
+                      </select>
+                      <div className={`flex-1 border rounded p-2 max-h-32 overflow-auto ${formData.brandType === 'all' ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                        {formData.brandType === 'all' ? (
+                          <div className="text-xs text-gray-400 text-center py-2">选择"包含"或"不包含"后可选择</div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {brandOptions.map(b => (
+                              <label key={b} className="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={formData.brandList.includes(b)} onChange={() => toggleMultiSelect('brandList', b, formData.brandList)} />
+                                <span className="text-sm">{b}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {formData.brandType !== 'all' && formData.brandList.length > 0 && (
                       <div className="mt-1 text-xs text-gray-500">已选: {formData.brandList.join(', ')}</div>
                     )}
                   </div>
 
                   {/* 发布机型 */}
-                  <div className="relative">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">发布机型</label>
-                    <select 
-                      className="w-full border rounded px-3 py-2"
-                      value={formData.deviceType}
-                      onChange={(e) => {
-                        setFormData({...formData, deviceType: e.target.value, deviceList: []});
-                        setShowDeviceDropdown(e.target.value !== 'all');
-                      }}
-                    >
-                      <option value="all">全部</option>
-                      <option value="include">包含</option>
-                      <option value="exclude">不包含</option>
-                    </select>
-                    {showDeviceDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
-                        {deviceOptions.map(d => (
-                          <label key={d} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" checked={formData.deviceList.includes(d)} onChange={() => toggleMultiSelect('deviceList', d, formData.deviceList)} />
-                            <span className="text-sm">{d}</span>
-                          </label>
-                        ))}
+                    <div className="flex gap-2">
+                      <select 
+                        className="w-24 border rounded px-2 py-2"
+                        value={formData.deviceType}
+                        onChange={(e) => {
+                          setFormData({...formData, deviceType: e.target.value, deviceList: []});
+                        }}
+                      >
+                        <option value="all">全部</option>
+                        <option value="include">包含</option>
+                        <option value="exclude">不包含</option>
+                      </select>
+                      <div className={`flex-1 border rounded p-2 max-h-32 overflow-auto ${formData.deviceType === 'all' ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                        {formData.deviceType === 'all' ? (
+                          <div className="text-xs text-gray-400 text-center py-2">选择"包含"或"不包含"后可选择</div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {deviceOptions.map(d => (
+                              <label key={d} className="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={formData.deviceList.includes(d)} onChange={() => toggleMultiSelect('deviceList', d, formData.deviceList)} />
+                                <span className="text-sm">{d}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {formData.deviceType !== 'all' && formData.deviceList.length > 0 && (
                       <div className="mt-1 text-xs text-gray-500">已选: {formData.deviceList.join(', ')}</div>
                     )}
                   </div>
 
                   {/* 内测机型 */}
-                  <div className="relative">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">内测机型</label>
-                    <select 
-                      className="w-full border rounded px-3 py-2"
-                      value={formData.betaDeviceType}
-                      onChange={(e) => {
-                        setFormData({...formData, betaDeviceType: e.target.value, betaDeviceList: []});
-                        setShowBetaDeviceDropdown(e.target.value !== 'all');
-                      }}
-                    >
-                      <option value="all">全部</option>
-                      <option value="include">包含</option>
-                      <option value="exclude">不包含</option>
-                    </select>
-                    {showBetaDeviceDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
-                        {deviceOptions.map(d => (
-                          <label key={d} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" checked={formData.betaDeviceList.includes(d)} onChange={() => toggleMultiSelect('betaDeviceList', d, formData.betaDeviceList)} />
-                            <span className="text-sm">{d}</span>
-                          </label>
-                        ))}
+                    <div className="flex gap-2">
+                      <select 
+                        className="w-24 border rounded px-2 py-2"
+                        value={formData.betaDeviceType}
+                        onChange={(e) => {
+                          setFormData({...formData, betaDeviceType: e.target.value, betaDeviceList: []});
+                        }}
+                      >
+                        <option value="all">全部</option>
+                        <option value="include">包含</option>
+                        <option value="exclude">不包含</option>
+                      </select>
+                      <div className={`flex-1 border rounded p-2 max-h-32 overflow-auto ${formData.betaDeviceType === 'all' ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                        {formData.betaDeviceType === 'all' ? (
+                          <div className="text-xs text-gray-400 text-center py-2">选择"包含"或"不包含"后可选择</div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {deviceOptions.map(d => (
+                              <label key={d} className="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={formData.betaDeviceList.includes(d)} onChange={() => toggleMultiSelect('betaDeviceList', d, formData.betaDeviceList)} />
+                                <span className="text-sm">{d}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {formData.betaDeviceType !== 'all' && formData.betaDeviceList.length > 0 && (
                       <div className="mt-1 text-xs text-gray-500">已选: {formData.betaDeviceList.join(', ')}</div>
                     )}
                   </div>
 
                   {/* 适用安卓版本 */}
-                  <div className="relative">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">适用安卓版本</label>
-                    <select 
-                      className="w-full border rounded px-3 py-2"
-                      value={formData.androidVersionType}
-                      onChange={(e) => {
-                        setFormData({...formData, androidVersionType: e.target.value, androidVersionList: [], tosVersionList: []});
-                        setShowAndroidDropdown(e.target.value !== 'all');
-                      }}
-                    >
-                      <option value="all">全部</option>
-                      <option value="include">包含</option>
-                      <option value="exclude">不包含</option>
-                    </select>
-                    {showAndroidDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
-                        {['Android 11', 'Android 12', 'Android 13', 'Android 14', 'Android 15', 'Android 16'].map(v => (
-                          <label key={v} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" checked={formData.androidVersionList.includes(v)} onChange={() => toggleMultiSelect('androidVersionList', v, formData.androidVersionList)} />
-                            <span className="text-sm">{v}</span>
-                          </label>
-                        ))}
+                    <div className="flex gap-2">
+                      <select 
+                        className="w-24 border rounded px-2 py-2"
+                        value={formData.androidVersionType}
+                        onChange={(e) => {
+                          setFormData({...formData, androidVersionType: e.target.value, androidVersionList: [], tosVersionList: []});
+                        }}
+                      >
+                        <option value="all">全部</option>
+                        <option value="include">包含</option>
+                        <option value="exclude">不包含</option>
+                      </select>
+                      <div className={`flex-1 border rounded p-2 max-h-32 overflow-auto ${formData.androidVersionType === 'all' ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                        {formData.androidVersionType === 'all' ? (
+                          <div className="text-xs text-gray-400 text-center py-2">选择"包含"或"不包含"后可选择</div>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {['Android 11', 'Android 12', 'Android 13', 'Android 14', 'Android 15', 'Android 16'].map(v => (
+                              <label key={v} className="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={formData.androidVersionList.includes(v)} onChange={() => toggleMultiSelect('androidVersionList', v, formData.androidVersionList)} />
+                                <span className="text-sm">{v}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {formData.androidVersionType !== 'all' && formData.androidVersionList.length > 0 && (
                       <div className="mt-1 text-xs text-gray-500">已选: {formData.androidVersionList.join(', ')}</div>
                     )}
                   </div>
 
-                  {/* 适用tOS版本 - 根据安卓版本级联 */}
-                  <div className="relative">
+                  {/* 适用tOS版本 */}
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">适用tOS版本</label>
-                    <select 
-                      className="w-full border rounded px-3 py-2"
-                      value={formData.tosVersionType}
-                      onChange={(e) => {
-                        setFormData({...formData, tosVersionType: e.target.value, tosVersionList: []});
-                        setShowTosDropdown(e.target.value !== 'all');
-                      }}
-                    >
-                      <option value="all">全部</option>
-                      <option value="include">包含</option>
-                      <option value="exclude">不包含</option>
-                    </select>
-                    {showTosDropdown && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-auto p-2">
-                        {getTosOptionsForAndroid().length > 0 ? getTosOptionsForAndroid().map(v => (
-                          <label key={v} className="flex items-center gap-2 p-1 hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" checked={formData.tosVersionList.includes(v)} onChange={() => toggleMultiSelect('tosVersionList', v, formData.tosVersionList)} />
-                            <span className="text-sm">{v}</span>
-                          </label>
-                        )) : (
-                          <div className="p-2 text-xs text-gray-500">请先选择安卓版本</div>
+                    <div className="flex gap-2">
+                      <select 
+                        className="w-24 border rounded px-2 py-2"
+                        value={formData.tosVersionType}
+                        onChange={(e) => {
+                          setFormData({...formData, tosVersionType: e.target.value, tosVersionList: []});
+                        }}
+                      >
+                        <option value="all">全部</option>
+                        <option value="include">包含</option>
+                        <option value="exclude">不包含</option>
+                      </select>
+                      <div className={`flex-1 border rounded p-2 max-h-32 overflow-auto ${formData.tosVersionType === 'all' ? 'bg-gray-100 opacity-50' : 'bg-white'}`}>
+                        {formData.tosVersionType === 'all' ? (
+                          <div className="text-xs text-gray-400 text-center py-2">选择"包含"或"不包含"后可选择</div>
+                        ) : getTosOptionsForAndroid().length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {getTosOptionsForAndroid().map(v => (
+                              <label key={v} className="flex items-center gap-1 cursor-pointer">
+                                <input type="checkbox" checked={formData.tosVersionList.includes(v)} onChange={() => toggleMultiSelect('tosVersionList', v, formData.tosVersionList)} />
+                                <span className="text-sm">{v}</span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 text-center py-2">请先选择安卓版本</div>
                         )}
                       </div>
-                    )}
+                    </div>
                     {formData.tosVersionType !== 'all' && formData.tosVersionList.length > 0 && (
                       <div className="mt-1 text-xs text-gray-500">已选: {formData.tosVersionList.join(', ')}</div>
                     )}
