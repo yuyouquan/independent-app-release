@@ -1107,17 +1107,25 @@ function MaterialAuditModal({
 
   const handleOperatorSubmit = () => {
     if (operatorResult === 'pass') {
-      setStep('boss');
+      // 运营通过：关闭弹窗，飞书通知老板审核
+      onOperatorPass();
+      onClose();
     } else if (operatorResult === 'reject' && rejectReason) {
+      // 运营拒绝：关闭弹窗，飞书通知申请人，流程回退到物料上传
       onOperatorReject(rejectReason);
+      onClose();
     }
   };
 
   const handleBossSubmit = () => {
     if (bossResult === 'pass') {
+      // 老板通过：关闭弹窗，飞书通知应用上架责任人
       onBossPass();
+      onClose();
     } else if (bossResult === 'reject' && rejectReason) {
+      // 老板拒绝：关闭弹窗
       onBossReject(rejectReason);
+      onClose();
     }
   };
 
@@ -1126,7 +1134,7 @@ function MaterialAuditModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <div>
@@ -1138,151 +1146,97 @@ function MaterialAuditModal({
           </button>
         </div>
 
-        {/* 只读模式不显示Step indicator */}
-        {!isReadOnly && (
-          <div className="px-6 py-3 bg-gray-50 border-b">
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center gap-2 ${step === 'operator' ? 'text-blue-600 font-medium' : 'text-green-600'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'operator' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'}`}>
-                  {step === 'boss' ? '✓' : '1'}
+        {/* 审核结果填写 - 固定在最上方 */}
+        <div className="flex-shrink-0">
+          {/* Step indicator */}
+          {!isReadOnly && (
+            <div className="px-6 py-3 bg-gray-50 border-b">
+              <div className="flex items-center gap-4">
+                <div className={`flex items-center gap-2 ${step === 'operator' ? 'text-blue-600 font-medium' : 'text-green-600'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'operator' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'}`}>
+                    {step === 'boss' ? '✓' : '1'}
+                  </div>
+                  运营人员审核
                 </div>
-                运营人员审核
-              </div>
-              <div className="flex-1 h-0.5 bg-gray-300" />
-              <div className={`flex items-center gap-2 ${step === 'boss' ? 'text-blue-600 font-medium' : step === 'operator' ? 'text-gray-400' : 'text-green-600'}`}>
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'boss' ? 'bg-blue-600 text-white' : step === 'operator' ? 'bg-gray-300 text-gray-500' : 'bg-green-600 text-white'}`}>
-                  {step === 'operator' ? '2' : '✓'}
+                <div className="flex-1 h-0.5 bg-gray-300" />
+                <div className={`flex items-center gap-2 ${step === 'boss' ? 'text-blue-600 font-medium' : step === 'operator' ? 'text-gray-400' : 'text-green-600'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'boss' ? 'bg-blue-600 text-white' : step === 'operator' ? 'bg-gray-300 text-gray-500' : 'bg-green-600 text-white'}`}>
+                    {step === 'operator' ? '2' : '✓'}
+                  </div>
+                  老板审核
                 </div>
-                老板审核
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 审核结果展示 - 只读模式 */}
-        {isReadOnly && (
-          <div className="px-6 py-4 bg-gray-50 border-b">
-            <div className="flex items-center gap-4">
-              {apk.nodes[3]?.status === 'completed' ? (
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">已通过</span>
-                </div>
-              ) : apk.nodes[3]?.status === 'rejected' ? (
-                <div className="flex items-center gap-2 text-red-600">
-                  <XCircle className="w-5 h-5" />
-                  <span className="font-medium">未通过</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-blue-600">
-                  <Clock className="w-5 h-5" />
-                  <span className="font-medium">进行中</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 审核表单 */}
-        {step === 'operator' && (
-          <>
-            {/* 只读模式不显示审核结果选择 */}
-            {!isReadOnly && (
-              <div className="px-6 py-4 border-b">
-                <h4 className="font-medium mb-3">运营人员审核结果 <span className="text-red-500">*</span></h4>
-                <div className="flex gap-6">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="operatorResult"
-                      checked={operatorResult === 'pass'}
-                      onChange={() => setOperatorResult('pass')}
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <span className="text-green-700 font-medium">通过</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="operatorResult"
-                      checked={operatorResult === 'reject'}
-                      onChange={() => setOperatorResult('reject')}
-                      className="w-4 h-4 text-red-600"
-                    />
-                    <span className="text-red-700 font-medium">不通过</span>
-                  </label>
-                </div>
-                {operatorResult === 'reject' && (
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
-                    <textarea
-                      className="w-full border rounded-lg px-3 py-2"
-                      rows={3}
-                      placeholder="请填写拒绝原因"
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                    />
+          {/* 只读模式显示审核状态 */}
+          {isReadOnly && (
+            <div className="px-6 py-4 bg-gray-50 border-b">
+              <div className="flex items-center gap-4">
+                {apk.nodes[3]?.status === 'completed' ? (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">已通过</span>
+                  </div>
+                ) : apk.nodes[3]?.status === 'rejected' ? (
+                  <div className="flex items-center gap-2 text-red-600">
+                    <XCircle className="w-5 h-5" />
+                    <span className="font-medium">未通过</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-blue-600">
+                    <Clock className="w-5 h-5" />
+                    <span className="font-medium">进行中</span>
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Tab切换按钮 */}
-            <div className="px-6 py-3 border-b bg-gray-50">
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setActiveTab('basic')}
-                  className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-                >
-                  基础信息 <span className="text-red-500 ml-1">*</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('material')}
-                  className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
-                >
-                  所需物料 <span className="text-red-500 ml-1">*</span>
-                </button>
-              </div>
             </div>
+          )}
 
-            <div className="p-6 overflow-y-auto max-h-[40vh]">
-              {/* 使用只读物料表单组件 */}
-              <ReadOnlyMaterialForm 
-                apk={apk}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                activeLang={activeLang}
-                setActiveLang={setActiveLang}
-                availableLangs={availableLangs}
-              />
+          {/* 运营人员审核结果填写 */}
+          {step === 'operator' && !isReadOnly && (
+            <div className="px-6 py-4 border-b bg-blue-50">
+              <h4 className="font-medium mb-3">运营人员审核结果 <span className="text-red-500">*</span></h4>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="operatorResult"
+                    checked={operatorResult === 'pass'}
+                    onChange={() => setOperatorResult('pass')}
+                    className="w-4 h-4 text-green-600"
+                  />
+                  <span className="text-green-700 font-medium">通过</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="operatorResult"
+                    checked={operatorResult === 'reject'}
+                    onChange={() => setOperatorResult('reject')}
+                    className="w-4 h-4 text-red-600"
+                  />
+                  <span className="text-red-700 font-medium">不通过</span>
+                </label>
+              </div>
+              {operatorResult === 'reject' && (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">拒绝原因 <span className="text-red-500">*</span></label>
+                  <textarea
+                    className="w-full border rounded-lg px-3 py-2"
+                    rows={3}
+                    placeholder="请填写拒绝原因"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                </div>
+              )}
             </div>
+          )}
 
-            {/* 只读模式显示关闭按钮 */}
-            {isReadOnly ? (
-              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-                <button onClick={onClose} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                  关闭
-                </button>
-              </div>
-            ) : (
-              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-                <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
-                <button
-                  onClick={handleOperatorSubmit}
-                  disabled={!operatorResult || (operatorResult === 'reject' && !rejectReason)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  确认
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* 只读模式不显示老板审核步骤 */}
-        {!isReadOnly && step === 'boss' && (
-          <>
-            <div className="px-6 py-4 border-b">
+          {/* 老板审核结果填写 - 只有在运营提交后才可填写 */}
+          {step === 'boss' && !isReadOnly && (
+            <div className="px-6 py-4 border-b bg-purple-50">
               <h4 className="font-medium mb-3">老板审核结果 <span className="text-red-500">*</span></h4>
               <div className="flex gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -1319,9 +1273,59 @@ function MaterialAuditModal({
                 </div>
               )}
             </div>
+          )}
+        </div>
 
-            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-              <button onClick={() => setStep('operator')} className="px-4 py-2 border rounded-lg hover:bg-gray-100">上一步</button>
+        {/* Tab切换按钮 */}
+        <div className="flex-shrink-0 px-6 py-3 border-b bg-gray-50">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('basic')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'basic' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              基础信息 <span className="text-red-500 ml-1">*</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('material')}
+              className={`px-4 py-2 rounded-lg ${activeTab === 'material' ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`}
+            >
+              所需物料 <span className="text-red-500 ml-1">*</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 物料详情内容 - 可滚动 */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <ReadOnlyMaterialForm 
+            apk={apk}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            activeLang={activeLang}
+            setActiveLang={setActiveLang}
+            availableLangs={availableLangs}
+          />
+        </div>
+
+        {/* Footer - 固定在底部 */}
+        <div className="flex-shrink-0 flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+          {isReadOnly ? (
+            <button onClick={onClose} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              关闭
+            </button>
+          ) : step === 'operator' ? (
+            <>
+              <button onClick={onClose} className="px-4 py-2 border rounded-lg hover:bg-gray-100">取消</button>
+              <button
+                onClick={handleOperatorSubmit}
+                disabled={!operatorResult || (operatorResult === 'reject' && !rejectReason)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => { setStep('operator'); setBossResult(null); setRejectReason(''); }} className="px-4 py-2 border rounded-lg hover:bg-gray-100">上一步</button>
               <button
                 onClick={handleBossSubmit}
                 disabled={!bossResult || (bossResult === 'reject' && !rejectReason)}
@@ -1329,9 +1333,9 @@ function MaterialAuditModal({
               >
                 确认
               </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
