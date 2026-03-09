@@ -2175,6 +2175,13 @@ function HomePage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [kanbanView, setKanbanView] = useState<'shuttle' | 'product' | 'status'>('shuttle');
+  
+  // 代办收起/展开状态
+  const [todoCollapsed, setTodoCollapsed] = useState(false);
+  
+  // 申请列表分页 - 默认10条/页，支持修改
+  const [listPageSize, setListPageSize] = useState(10);
+  const [listCurrentPage, setListCurrentPage] = useState(1);
 
   // 班车申请表单状态
   const [shuttleForm, setShuttleForm] = useState({
@@ -2244,7 +2251,7 @@ function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-gray-900">独立三方应用发布系统</h1>
-              <span className="ml-2 text-xs text-gray-500">v3.2 (2026-03-04)</span>
+              <span className="ml-2 text-xs text-gray-500">v3.3 (2026-03-09 v2.0需求更新)</span>
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-500 hover:text-gray-700 text-sm">通知</button>
@@ -2369,13 +2376,59 @@ function HomePage() {
             {filteredApps.length === 0 && (
               <div className="text-center py-12 text-gray-500">暂无数据</div>
             )}
+            
+            {/* 申请列表分页 - 默认10条/页，支持修改 (v2.0需求) */}
+            {filteredApps.length > 0 && (
+              <div className="mt-4 flex justify-between items-center px-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">每页</span>
+                  <select
+                    value={listPageSize}
+                    onChange={(e) => { setListPageSize(Number(e.target.value)); setListCurrentPage(1); }}
+                    className="border rounded px-2 py-1 text-sm"
+                  >
+                    <option value={10}>10条</option>
+                    <option value={20}>20条</option>
+                    <option value={50}>50条</option>
+                  </select>
+                </div>
+                <div className="text-sm text-gray-500">
+                  共 {filteredApps.length} 条
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 待办区域 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">待办</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* 工作台区域 - 左右布局，代办支持收起/展开 (v2.0需求) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* 左侧：看板区域 (70%) */}
+          <div className="lg:col-span-4">
+            {/* 看板区域 */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">看板</h2>
+              
+              {/* 看板Tab切换 */}
+              <div className="flex border-b mb-6">
+                <button
+                  onClick={() => setKanbanView('shuttle')}
+                  className={`px-4 py-2 -mb-px ${kanbanView === 'shuttle' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+                >
+                  班车视角
+                </button>
+                <button
+                  onClick={() => setKanbanView('product')}
+                  className={`px-4 py-2 -mb-px ${kanbanView === 'product' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+                >
+                  产品视角
+                </button>
+                <button
+                  onClick={() => setKanbanView('status')}
+                  className={`px-4 py-2 -mb-px ${kanbanView === 'status' ? 'border-b-2 border-blue-500 text-blue-600 font-medium' : 'text-gray-500'}`}
+                >
+                  状态视角
+                </button>
+              </div>
             {todos.map((todo) => (
               <div key={todo.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex justify-between items-start mb-2">
@@ -2487,6 +2540,59 @@ function HomePage() {
             </div>
           )}
         </div>
+
+          {/* 右侧：待办区域 (30%)，支持收起/展开 (v2.0需求) */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow p-4">
+              <div 
+                className="flex justify-between items-center cursor-pointer mb-4"
+                onClick={() => setTodoCollapsed(!todoCollapsed)}
+              >
+                <h2 className="text-lg font-semibold text-gray-900">
+                  待办 {!todoCollapsed && `(${todos.length})`}
+                </h2>
+                <button className="text-gray-500 hover:text-gray-700">
+                  {todoCollapsed ? '▼' : '▲'}
+                </button>
+              </div>
+              
+              {!todoCollapsed && (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {todos.map((todo) => (
+                    <div key={todo.id} className="border rounded-lg p-3 hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-1">
+                        <div>
+                          <div className="text-xs text-gray-500">{todo.shuttleName}</div>
+                          <div className="font-medium text-gray-900 text-sm">{todo.appName}</div>
+                        </div>
+                        <span className={`px-2 py-0.5 text-xs rounded-full ${
+                          todo.nodeStatus === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {todo.nodeStatus === 'rejected' ? '已拒绝' : '待处理'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">节点: {todo.currentNode}</div>
+                      {todo.rejectReason && (
+                        <div className="mt-1 p-1 bg-red-50 rounded text-xs text-red-600">
+                          拒绝: {todo.rejectReason}
+                        </div>
+                      )}
+                      <button 
+                        onClick={() => navigate(`/apk/${todo.appId}?node=${todo.currentNode}`)}
+                        className="mt-2 w-full bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700"
+                      >
+                        去处理
+                      </button>
+                    </div>
+                  ))}
+                  {todos.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 text-sm">暂无待办事项</div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* 申请Modal */}
@@ -2595,7 +2701,9 @@ function ApplicationDetailPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [addModalSelected, setAddModalSelected] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
+  // 应用卡片分页 - 默认8条/页，支持切换16/24/32/64 (v2.0需求)
+  const [pageSize, setPageSize] = useState(8);
+  const pageSizeOptions = [8, 16, 24, 32, 64];
 
   // 搜索过滤
   const filteredApps = app.apps.filter(apk => 
@@ -2724,9 +2832,9 @@ function ApplicationDetailPage() {
             ))}
           </div>
 
-          {/* 分页 */}
+          {/* 分页 - 支持8/16/24/32/64 (v2.0需求) */}
           {totalPages > 1 && (
-            <div className="mt-4 flex justify-center gap-2">
+            <div className="mt-4 flex justify-center items-center gap-4">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
@@ -2744,6 +2852,18 @@ function ApplicationDetailPage() {
               >
                 下一页
               </button>
+              <div className="flex items-center gap-2 ml-4">
+                <span className="text-sm text-gray-500">每页</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  {pageSizeOptions.map(size => (
+                    <option key={size} value={size}>{size}条</option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
         </div>
